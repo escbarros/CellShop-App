@@ -1,6 +1,7 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { Controller, Get } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { readPackageVersion } from '../common/package-info';
+import { API_TAGS } from '../common/swagger';
 
 export type HealthStatus = {
   status: 'ok';
@@ -8,12 +9,7 @@ export type HealthStatus = {
   uptime: number;
 };
 
-function readPackageVersion(): string {
-  const raw = readFileSync(join(__dirname, '..', '..', 'package.json'), 'utf8');
-
-  return (JSON.parse(raw) as { version: string }).version;
-}
-
+@ApiTags(API_TAGS.health)
 @Controller('health')
 export class HealthController {
   private readonly version = readPackageVersion();

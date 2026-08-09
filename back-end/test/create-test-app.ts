@@ -5,6 +5,7 @@ import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
 import { Environment } from '../src/common/config/environment';
 import { configureHttp } from '../src/common/config/http-configuration';
+import { setupSwagger } from '../src/common/swagger';
 
 const TEST_ENVIRONMENT: Record<string, string> = {
   PORT: '3333',
@@ -35,6 +36,7 @@ export async function createTestApp(options: TestAppOptions = {}): Promise<NestE
   const environment = app.get<ConfigService<Environment, true>>(ConfigService);
 
   configureHttp(app, environment.get('CORS_ORIGIN', { infer: true }));
+  setupSwagger(app);
 
   await app.init();
 
