@@ -98,3 +98,56 @@ describe('products endpoint', () => {
     expect(Number.isInteger(sellable?.availableQty)).toBe(true);
   });
 });
+
+describe('product detail endpoint', () => {
+  let app: NestExpressApplication;
+
+  beforeAll(async () => {
+    app = await createTestApp();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  function getProduct(sku: string) {
+    return request(app.getHttpServer()).get(`/products/${sku}`);
+  }
+
+  it('returns 200 with current stock for a known sku', async () => {
+    const response = await getProduct(SELLABLE_SKU).expect(200);
+    const body = response.body as ApiResponse<VariantResponse>;
+
+    expect(body.error).toBeNull();
+    expect(body.data?.sku).toBe(SELLABLE_SKU);
+    expect(body.data?.availableQty).toBe(INITIAL_AVAILABLE_QTY[SELLABLE_SKU]);
+    expect(body.data?.available).toBe(true);
+    expect(Object.keys(body.data ?? {}).sort()).toEqual([...VARIANT_FIELDS].sort());
+  });
+
+  it('returns 404 SKU_NOT_FOUND for an unknown sku', async () => {
+    const response = await getProduct('CAP-NOT-A-REAL-SKU').expect(404);
+    const body = response.body as ApiResponse<never>;
+
+    expect(body.data).toBeNull();
+    expect(body.error?.code).toBe('SKU_NOT_FOUND');
+    expect(body.error?.message).toBe('Não encontramos esse produto.');
+  });
+
+  it('returns 404 for an inactive sku instead of exposing it', async () => {
+    const response = await getProduct(INACTIVE_SKU).expect(404);
+    const body = response.body as ApiResponse<never>;
+
+    expect(body.data).toBeNull();
+    expect(body.error?.code).toBe('SKU_NOT_FOUND');
+  });
+
+  it('uses the shared error response shape', async () => {
+    const response = await getProduct('CAP-NOT-A-REAL-SKU').expect(404);
+    const body = response.body as ApiResponse<never>;
+
+    expect(body.meta.requestId).toMatch(/^req_[0-9a-f]{16}$/);
+    expect(new Date(body.meta.timestamp).toISOString()).toBe(body.meta.timestamp);
+    expect(body.error?.details).toBeUndefined();
+  });
+});

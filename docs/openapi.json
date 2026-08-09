@@ -73,7 +73,8 @@
             "in": "path",
             "description": "Stock keeping unit, as listed by GET /products.",
             "schema": {
-              "example": "CAP-SCRAPBOOK-IP16-AIS-TRA"
+              "example": "CAP-SCRAPBOOK-IP16-AIS-TRA",
+              "type": "string"
             }
           }
         ],

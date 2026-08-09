@@ -1,4 +1,4 @@
-import { Controller, Get, HttpStatus, NotImplementedException } from '@nestjs/common';
+import { Controller, Get, HttpStatus, Param } from '@nestjs/common';
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiEnvelope, ApiEnvelopeError } from '../common/dto/api-envelope.decorator';
 import { API_TAGS } from '../common/swagger';
@@ -53,7 +53,7 @@ export class CatalogController {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
     description: 'Unexpected failure. The cause is logged under meta.requestId.',
   })
-  find(): VariantResponse {
-    throw new NotImplementedException();
+  find(@Param('sku') sku: string): VariantResponse {
+    return this.catalog.findBySku(sku);
   }
 }

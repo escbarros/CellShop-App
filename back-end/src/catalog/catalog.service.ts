@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { SkuNotFoundError } from '../common/errors/domain.errors';
 import { formatBRL } from '../common/money';
 import { CatalogRepository, StockRepository } from '../repositories/repository.contracts';
 import { ProductVariant } from './catalog.model';
@@ -13,6 +14,16 @@ export class CatalogService {
 
   list(): VariantResponse[] {
     return this.catalog.listActiveVariants().map((variant) => this.toResponse(variant));
+  }
+
+  findBySku(sku: string): VariantResponse {
+    const variant = this.catalog.findVariantBySku(sku);
+
+    if (variant === undefined) {
+      throw new SkuNotFoundError();
+    }
+
+    return this.toResponse(variant);
   }
 
   private toResponse(variant: ProductVariant): VariantResponse {
