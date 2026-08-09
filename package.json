@@ -1,0 +1,16 @@
+{
+  "name": "cellshop-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CellShop",
+  "scripts": {
+    "dev": "concurrently --names back,front --prefix-colors blue,magenta \"npm run dev:back\" \"npm run dev:front\"",
+    "dev:back": "npm run start:dev --prefix back-end",
+    "dev:front": "npm run dev --prefix front-end",
+    "test": "npm test --prefix back-end && npm test --prefix front-end",
+    "lint": "npm run lint --prefix back-end && npm run lint --prefix front-end"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}
