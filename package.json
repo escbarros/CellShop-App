@@ -8,17 +8,21 @@
     "dev": "concurrently --names back,front --prefix-colors blue,magenta \"npm run dev:back\" \"npm run dev:front\"",
     "dev:back": "npm run start:dev --prefix back-end",
     "dev:front": "npm run dev --prefix front-end",
-    "test": "npm test --prefix back-end",
-    "lint": "npm run lint --prefix back-end",
-    "lint:fix": "npm run lint:fix --prefix back-end",
-    "format": "npm run format --prefix back-end",
-    "format:check": "npm run format:check --prefix back-end",
+    "test": "npm test --prefix back-end && npm test --prefix front-end",
+    "test:back": "npm test --prefix back-end",
+    "test:front": "npm test --prefix front-end",
+    "lint": "npm run lint --prefix back-end && npm run lint --prefix front-end",
+    "lint:fix": "npm run lint:fix --prefix back-end && npm run lint:fix --prefix front-end",
+    "format": "npm run format --prefix back-end && npm run format --prefix front-end",
+    "format:check": "npm run format:check --prefix back-end && npm run format:check --prefix front-end",
+    "typecheck": "npm run typecheck --prefix front-end",
     "openapi": "npm run openapi --prefix back-end",
     "openapi:check": "npm run openapi:check --prefix back-end"
   },
   "lint-staged": {
     "*.{json,yml,yaml}": "prettier --write",
-    "back-end/**/*.ts": "npm run lint:staged --prefix back-end --"
+    "back-end/**/*.ts": "npm run lint:staged --prefix back-end --",
+    "front-end/**/*.{ts,tsx}": "npm run lint:staged --prefix front-end --"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.1",

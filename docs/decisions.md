@@ -49,4 +49,10 @@ O catálogo usa produtos e imagens reais da Gocase para deixar a vitrine mais pr
 Os repositórios foram separados por responsabilidade: catálogo, estoque e pedidos. Cada método tem uma operação equivalente no banco, o que facilita trocar a implementação em memória por MySQL ou Postgres no futuro. O `decrementIfAvailable` também foi pensado para evitar problemas de concorrência. Ele tenta descontar o estoque apenas quando há quantidade suficiente e retorna true ou false conforme o resultado, sem precisar consultar o estoque antes. As abstrações também deixam os testes mais simples, já que cada teste pode usar apenas o repositório que precisa.
 
 
+## Tailwind CSS no front
 
+O Tailwind foi escolhido para manter os estilos próximos dos componentes, sem precisar criar uma estrutura de CSS separada para uma tela relativamente pequena. Também não foi usada uma biblioteca de componentes, porque o projeto não tem tamanho suficiente para justificar essa dependência.
+
+## TanStack Query
+
+O TanStack Query cuida do cache e das consultas da vitrine e do detalhe dos produtos, evitando requisições desnecessárias ao navegar entre as telas.
