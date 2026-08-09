@@ -1,8 +1,17 @@
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
+import { Environment } from './common/config/environment';
+import { configureHttp } from './common/config/http-configuration';
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  await app.listen(process.env.PORT ?? 3333);
+async function bootstrap(): Promise<void> {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bodyParser: false });
+  const environment = app.get<ConfigService<Environment, true>>(ConfigService);
+
+  configureHttp(app, environment.get('CORS_ORIGIN', { infer: true }));
+
+  await app.listen(environment.get('PORT', { infer: true }));
 }
+
 void bootstrap();

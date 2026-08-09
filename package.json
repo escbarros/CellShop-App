@@ -4,13 +4,26 @@
   "private": true,
   "description": "CellShop",
   "scripts": {
+    "prepare": "husky",
     "dev": "concurrently --names back,front --prefix-colors blue,magenta \"npm run dev:back\" \"npm run dev:front\"",
     "dev:back": "npm run start:dev --prefix back-end",
     "dev:front": "npm run dev --prefix front-end",
-    "test": "npm test --prefix back-end && npm test --prefix front-end",
-    "lint": "npm run lint --prefix back-end && npm run lint --prefix front-end"
+    "test": "npm test --prefix back-end",
+    "lint": "npm run lint --prefix back-end",
+    "lint:fix": "npm run lint:fix --prefix back-end",
+    "format": "npm run format --prefix back-end",
+    "format:check": "npm run format:check --prefix back-end"
+  },
+  "lint-staged": {
+    "*.{json,yml,yaml}": "prettier --write",
+    "back-end/**/*.ts": "npm run lint:staged --prefix back-end --"
   },
   "devDependencies": {
-    "concurrently": "^9.2.0"
+    "@commitlint/cli": "^19.6.1",
+    "@commitlint/config-conventional": "^19.6.0",
+    "concurrently": "^9.2.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "prettier": "^3.4.2"
   }
 }
