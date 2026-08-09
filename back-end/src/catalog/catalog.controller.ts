@@ -2,11 +2,14 @@ import { Controller, Get, HttpStatus, NotImplementedException } from '@nestjs/co
 import { ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
 import { ApiEnvelope, ApiEnvelopeError } from '../common/dto/api-envelope.decorator';
 import { API_TAGS } from '../common/swagger';
+import { CatalogService } from './catalog.service';
 import { VariantResponse } from './dto/variant.response';
 
 @ApiTags(API_TAGS.catalog)
 @Controller('products')
 export class CatalogController {
+  constructor(private readonly catalog: CatalogService) {}
+
   @Get()
   @ApiOperation({
     summary: 'List every sellable variant',
@@ -24,7 +27,7 @@ export class CatalogController {
     description: 'Unexpected failure. The cause is logged under meta.requestId.',
   })
   list(): VariantResponse[] {
-    throw new NotImplementedException();
+    return this.catalog.list();
   }
 
   @Get(':sku')

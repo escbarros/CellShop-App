@@ -9,7 +9,6 @@ type DeclaredRoute = {
 };
 
 const DECLARED_ROUTES: DeclaredRoute[] = [
-  { method: 'get', path: '/products' },
   { method: 'get', path: '/products/CAP-SCRAPBOOK-IP16-AIS-TRA' },
   { method: 'post', path: '/checkout' },
   { method: 'get', path: '/orders/CCS-2026-000417' },
@@ -34,7 +33,9 @@ describe('controller skeletons', () => {
   );
 
   it('answers inside the response envelope while still unimplemented', async () => {
-    const response = await request(app.getHttpServer()).get('/products').expect(501);
+    const response = await request(app.getHttpServer())
+      .get('/products/CAP-SCRAPBOOK-IP16-AIS-TRA')
+      .expect(501);
     const body = response.body as ApiResponse<never>;
 
     expect(body.data).toBeNull();
