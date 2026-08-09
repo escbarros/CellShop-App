@@ -33,5 +33,8 @@ em erro, `data` é `null`. Assim, o front sempre sabe que a estrutura vai ser a 
 
 Valores monetários são armazenados como BIGINT em centavos. Por exemplo, R$ 79,90 fica como 7990. Isso evita problemas de precisão comuns em números decimais e torna as operações com dinheiro simples e exatas, sem depender de arredondamentos.
 
+## Repositórios
+
+Os repositórios foram separados por responsabilidade: catálogo, estoque e pedidos. Cada método tem uma operação equivalente no banco, o que facilita trocar a implementação em memória por MySQL ou Postgres no futuro. O `decrementIfAvailable` também foi pensado para evitar problemas de concorrência. Ele tenta descontar o estoque apenas quando há quantidade suficiente e retorna true ou false conforme o resultado, sem precisar consultar o estoque antes. As abstrações também deixam os testes mais simples, já que cada teste pode usar apenas o repositório que precisa.
 
 
