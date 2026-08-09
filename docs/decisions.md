@@ -29,7 +29,29 @@ Para este desafio, o Nest acaba trazendo um pouco mais de estrutura do que o Exp
 Sucesso e erro usam a mesma forma: `{ data, error, meta }`. Em sucesso, `error` é `null`;
 em erro, `data` é `null`. Assim, o front sempre sabe que a estrutura vai ser a mesma.
 
-## Dinheiro é inteiro em centavos
+## Dinheiro em centavos
 
 Valores monetários são armazenados como BIGINT em centavos. Por exemplo, R$ 79,90 fica como 7990. Isso evita problemas de precisão comuns em números decimais e torna as operações com dinheiro simples e exatas, sem depender de arredondamentos.
+
+## Estoque pertence à variante, não ao produto
+
+`Product` é a estampa; `ProductVariant` é o SKU que se vende. Só a variante tem estoque —
+`Product` não tem nenhum campo de quantidade. Assim, ninguém desconta do lugar errado:
+vender a capinha da estampa Alice para iPhone 15 Pro não pode tirar do estoque da mesma
+estampa para Galaxy S24.
+
+## `device`, `material` e `color` são campos da variante
+
+Poderiam ser tabelas próprias, com chave estrangeira em cada uma. Neste escopo, não são:
+o catálogo é fixo, vem do seed, e não existe área administrativa para cadastrar aparelho
+ou material novo. Tabela separada só pagaria seu custo se algum desses valores tivesse
+atributo próprio — imagem do aparelho, ordem de exibição, data de lançamento — ou se
+fosse editável pelo lojista. Nenhum dos dois é o caso aqui.
+
+O que segura a consistência no lugar delas é o `UNIQUE (product_id, device, material,
+color)`: duas variantes iguais da mesma estampa não entram.
+
+Se o catálogo crescer, a migração é aditiva — cria a tabela, popula a partir dos valores
+distintos, troca a coluna por FK. Nenhuma regra de negócio muda, porque nada além da
+própria variante lê esses campos.
 
