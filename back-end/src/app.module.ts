@@ -4,6 +4,7 @@ import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { validateEnvironment } from './common/config/environment';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { ApiResponseInterceptor } from './common/interceptors/api-response.inter
       cache: true,
       validate: validateEnvironment,
     }),
+    HealthModule,
   ],
   controllers: [],
   providers: [
