@@ -8,6 +8,10 @@ export function listProducts(): Promise<ApiResult<Variant[]>> {
   return request<Variant[]>('/products');
 }
 
+export function getProduct(sku: string): Promise<ApiResult<Variant>> {
+  return request<Variant>(`/products/${encodeURIComponent(sku)}`);
+}
+
 export function submitCheckout(
   payload: CheckoutPayload,
   idempotencyKey: string,

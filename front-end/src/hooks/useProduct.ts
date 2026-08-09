@@ -1,14 +1,16 @@
 import { useQuery } from '@tanstack/react-query';
-import { listProducts } from '../api/client';
+import { getProduct } from '../api/client';
 import type { Variant } from '../api/contract';
 import { catalogKeys } from '../api/queries';
 import { ApiFailure } from '../api/result';
 
-export function useProducts() {
-  return useQuery<Variant[], ApiFailure>({
-    queryKey: catalogKeys.list(),
+const MAX_RETRIES = 1;
+
+export function useProduct(sku: string) {
+  return useQuery<Variant, ApiFailure>({
+    queryKey: catalogKeys.detail(sku),
     queryFn: async () => {
-      const result = await listProducts();
+      const result = await getProduct(sku);
 
       if (result.kind === 'success') {
         return result.data;
@@ -16,5 +18,6 @@ export function useProducts() {
 
       throw new ApiFailure(result.kind, result.message);
     },
+    retry: (attempt, error) => error.kind !== 'notFound' && attempt < MAX_RETRIES,
   });
 }

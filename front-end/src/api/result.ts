@@ -10,6 +10,18 @@ export type ApiResult<T> =
   | { kind: 'network'; message: string }
   | { kind: 'unknown'; message: string };
 
+export type ApiFailureKind = Exclude<ApiResult<unknown>['kind'], 'success'>;
+
+export class ApiFailure extends Error {
+  readonly kind: ApiFailureKind;
+
+  constructor(kind: ApiFailureKind, message: string) {
+    super(message);
+    this.name = 'ApiFailure';
+    this.kind = kind;
+  }
+}
+
 const NETWORK_MESSAGE = 'Não conseguimos falar com o servidor.';
 const UNKNOWN_MESSAGE = 'Algo deu errado do nosso lado. Tente de novo em instantes.';
 

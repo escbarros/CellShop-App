@@ -1,7 +1,7 @@
 import { useProducts } from '../hooks/useProducts';
+import { LoadError } from './LoadError';
 import { ProductGrid } from './ProductGrid';
 import { StorefrontEmpty } from './StorefrontEmpty';
-import { StorefrontError } from './StorefrontError';
 import { StorefrontSkeleton } from './StorefrontSkeleton';
 
 export function Storefront() {
@@ -12,7 +12,13 @@ export function Storefront() {
   }
 
   if (isError) {
-    return <StorefrontError message={error.message} onRetry={() => void refetch()} />;
+    return (
+      <LoadError
+        title="Não foi possível carregar a vitrine"
+        message={error.message}
+        onRetry={() => void refetch()}
+      />
+    );
   }
 
   if (data.length === 0) {

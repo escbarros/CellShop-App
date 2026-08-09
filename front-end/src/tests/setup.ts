@@ -1,8 +1,14 @@
 import '@testing-library/jest-dom/vitest';
 import { cleanup } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
+import { useCartDrawerStore } from '../store/cart-drawer-store';
+import { useCartStore } from '../store/cart-store';
 
 beforeEach(() => {
+  localStorage.clear();
+  useCartStore.setState({ items: [] });
+  useCartDrawerStore.setState({ status: 'closed' });
+
   vi.stubGlobal(
     'fetch',
     vi.fn((input: RequestInfo | URL) => {

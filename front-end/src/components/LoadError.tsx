@@ -1,11 +1,12 @@
 import { CircleAlert } from 'lucide-react';
 
-type StorefrontErrorProps = {
+type LoadErrorProps = {
+  title: string;
   message: string;
   onRetry: () => void;
 };
 
-export function StorefrontError({ message, onRetry }: StorefrontErrorProps) {
+export function LoadError({ title, message, onRetry }: LoadErrorProps) {
   return (
     <div
       role="alert"
@@ -15,7 +16,7 @@ export function StorefrontError({ message, onRetry }: StorefrontErrorProps) {
         <CircleAlert aria-hidden="true" className="h-5 w-5" strokeWidth={1.9} />
       </span>
 
-      <h2 className="text-base font-semibold text-ink">Não foi possível carregar a vitrine</h2>
+      <h2 className="text-base font-semibold text-ink">{title}</h2>
       <p className="text-sm text-ink-soft">{message}</p>
 
       <button
