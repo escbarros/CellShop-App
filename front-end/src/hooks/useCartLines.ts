@@ -6,6 +6,8 @@ export type CartLine = {
   sku: string;
   quantity: number;
   variant: Variant | undefined;
+  lineTotalCents: number;
+  formattedLineTotal: string | null;
 };
 
 export type CartSummary = {
@@ -21,16 +23,20 @@ export function useCartLines(): CartSummary {
   const items = useCartItems();
   const { data: products, isPending } = useProducts();
 
-  const lines = items.map((item) => ({
-    sku: item.sku,
-    quantity: item.quantity,
-    variant: products?.find((product) => product.sku === item.sku),
-  }));
+  const lines = items.map((item) => {
+    const variant = products?.find((product) => product.sku === item.sku);
+    const lineTotalCents = variant ? variant.priceCents * item.quantity : 0;
 
-  const subtotalCents = lines.reduce(
-    (total, line) => total + (line.variant ? line.variant.priceCents * line.quantity : 0),
-    0,
-  );
+    return {
+      sku: item.sku,
+      quantity: item.quantity,
+      variant,
+      lineTotalCents,
+      formattedLineTotal: variant ? brlFormatter.format(lineTotalCents / 100) : null,
+    };
+  });
+
+  const subtotalCents = lines.reduce((total, line) => total + line.lineTotalCents, 0);
 
   return {
     lines,

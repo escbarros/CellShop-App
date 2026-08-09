@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { App } from './App';
@@ -50,6 +50,29 @@ describe('App', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Bloom · iPhone 16' }),
     ).toBeInTheDocument();
+  });
+
+  it('walks from the cart drawer to the checkout summary', async () => {
+    stubCatalogAndDetail();
+    useCartStore.getState().add(SKU, 2);
+
+    renderWithProviders(<App />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /carrinho de compras com/i }));
+    await userEvent.click(await screen.findByRole('link', { name: 'Finalizar compra' }));
+
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Finalizar compra' }),
+    ).toBeInTheDocument();
+    expect(within(screen.getByRole('main')).getByText('Subtotal · 2 unidades')).toBeInTheDocument();
+  });
+
+  it('sends an empty cart away from the checkout with an explanation', async () => {
+    stubCatalogAndDetail();
+
+    renderWithProviders(<App />, { route: '/checkout' });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/seu carrinho está vazio/i);
   });
 
   it('shows in the cart what was added from the storefront', async () => {
