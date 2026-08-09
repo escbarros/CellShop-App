@@ -1,6 +1,15 @@
-import { Controller, HttpCode, HttpStatus, NotImplementedException, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  NotImplementedException,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBody, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiEnvelope, ApiEnvelopeError } from '../common/dto/api-envelope.decorator';
+import { IdempotencyKeyGuard } from '../common/guards/idempotency-key.guard';
 import { API_TAGS } from '../common/swagger';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { OrderResponse } from './dto/order.response';
@@ -10,6 +19,7 @@ import { OrderResponse } from './dto/order.response';
 export class CheckoutController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(IdempotencyKeyGuard)
   @ApiOperation({
     summary: 'Place an order',
     description:
@@ -58,7 +68,7 @@ export class CheckoutController {
     status: HttpStatus.SERVICE_UNAVAILABLE,
     description: 'SERVICE_UNAVAILABLE. Injected failure, used to exercise the retry path.',
   })
-  create(): OrderResponse {
+  create(@Body() _payload: CreateCheckoutDto): OrderResponse {
     throw new NotImplementedException();
   }
 }
