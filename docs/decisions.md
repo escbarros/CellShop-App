@@ -23,3 +23,9 @@ Isso também facilita a troca do armazenamento em memória por um banco no futur
 Além disso, o projeto ganha validação e documentação da API a partir dos DTOs, além de uma boa estrutura para testes.
 
 Para este desafio, o Nest acaba trazendo um pouco mais de estrutura do que o Express, mas considero que esse custo vale pela organização e facilidade de evolução do projeto.
+
+## Toda resposta sai no mesmo envelope
+
+Sucesso e erro usam a mesma forma: `{ data, error, meta }`. Em sucesso, `error` é `null`;
+em erro, `data` é `null`. Assim, o front sempre sabe que a estrutura vai ser a mesma.
+

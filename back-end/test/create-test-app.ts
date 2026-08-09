@@ -1,3 +1,4 @@
+import { Type } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
@@ -18,11 +19,16 @@ function applyTestEnvironment(): void {
   }
 }
 
-export async function createTestApp(): Promise<NestExpressApplication> {
+type TestAppOptions = {
+  controllers?: Type<unknown>[];
+};
+
+export async function createTestApp(options: TestAppOptions = {}): Promise<NestExpressApplication> {
   applyTestEnvironment();
 
   const moduleRef = await Test.createTestingModule({
     imports: [AppModule],
+    controllers: options.controllers ?? [],
   }).compile();
 
   const app = moduleRef.createNestApplication<NestExpressApplication>({ bodyParser: false });

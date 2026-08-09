@@ -1,4 +1,5 @@
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { assignRequestId } from '../http/request-id';
 
 export const BODY_SIZE_LIMIT = '100kb';
 
@@ -20,6 +21,7 @@ function configureBodyLimit(app: NestExpressApplication): void {
 }
 
 export function configureHttp(app: NestExpressApplication, corsOrigin: string): void {
+  app.use(assignRequestId);
   configureCors(app, corsOrigin);
   configureBodyLimit(app);
 }
