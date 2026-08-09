@@ -23,3 +23,14 @@ Isso também facilita a troca do armazenamento em memória por um banco no futur
 Além disso, o projeto ganha validação e documentação da API a partir dos DTOs, além de uma boa estrutura para testes.
 
 Para este desafio, o Nest acaba trazendo um pouco mais de estrutura do que o Express, mas considero que esse custo vale pela organização e facilidade de evolução do projeto.
+
+## Uma configuração de Jest só, sem `test:e2e` separado
+
+O `nest new` cria duas configurações: a do `package.json`, para os testes de unidade, e
+`test/jest-e2e.json`, para os de ponta a ponta. Aqui os testes de HTTP sobem a aplicação
+pelo `createTestApp()` e falam com ela por Supertest via `app.getHttpServer()` — sem
+servidor escutando porta, sem processo separado. Nada nesses testes precisa da segunda
+configuração, e manter duas obrigaria a lembrar de mudar as duas toda vez.
+
+Ficou uma configuração só, com `roots` em `src/` e `test/`. `npm test` roda a suíte
+inteira; não existe um subconjunto que só o `test:e2e` alcançava.
