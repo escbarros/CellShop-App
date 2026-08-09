@@ -29,3 +29,7 @@ Para este desafio, o Nest acaba trazendo um pouco mais de estrutura do que o Exp
 Sucesso e erro usam a mesma forma: `{ data, error, meta }`. Em sucesso, `error` é `null`;
 em erro, `data` é `null`. Assim, o front sempre sabe que a estrutura vai ser a mesma.
 
+## Dinheiro é inteiro em centavos
+
+Valores monetários são armazenados como BIGINT em centavos. Por exemplo, R$ 79,90 fica como 7990. Isso evita problemas de precisão comuns em números decimais e torna as operações com dinheiro simples e exatas, sem depender de arredondamentos.
+
