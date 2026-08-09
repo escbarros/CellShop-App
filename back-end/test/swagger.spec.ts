@@ -47,8 +47,26 @@ describe('swagger', () => {
     const response = await request(app.getHttpServer()).get('/docs-json').expect(200);
     const document = response.body as OpenApiDocument;
 
-    expect(document.components.schemas.ApiErrorResponseSchema).toBeDefined();
-    expect(document.components.schemas.ApiErrorSchema.properties).toHaveProperty('code');
-    expect(document.components.schemas.ApiErrorSchema.properties).toHaveProperty('message');
+    expect(document.components.schemas.ErrorResponse).toBeDefined();
+    expect(document.components.schemas.ErrorBody.properties).toHaveProperty('code');
+    expect(document.components.schemas.ErrorBody.properties).toHaveProperty('message');
+  });
+
+  it('documents every request and response model of the contract', async () => {
+    const response = await request(app.getHttpServer()).get('/docs-json').expect(200);
+    const document = response.body as OpenApiDocument;
+
+    expect(Object.keys(document.components.schemas)).toEqual(
+      expect.arrayContaining([
+        'CheckoutItemDto',
+        'RecipientDto',
+        'CreateCheckoutDto',
+        'VariantResponse',
+        'OrderResponse',
+        'OrderItemResponse',
+        'OrderEventResponse',
+        'ErrorResponse',
+      ]),
+    );
   });
 });
