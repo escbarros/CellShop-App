@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Stock } from '../../stock/stock.model';
 import { StockRepository } from '../repository.contracts';
-import { CatalogState } from './seed';
+import type { CatalogState } from './seed';
 
 @Injectable()
 export class InMemoryStockRepository extends StockRepository {

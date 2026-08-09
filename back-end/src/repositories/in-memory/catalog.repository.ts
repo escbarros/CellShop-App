@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Product, ProductVariant } from '../../catalog/catalog.model';
 import { CatalogRepository } from '../repository.contracts';
-import { CatalogState } from './seed';
+import type { CatalogState } from './seed';
 
 @Injectable()
 export class InMemoryCatalogRepository extends CatalogRepository {
