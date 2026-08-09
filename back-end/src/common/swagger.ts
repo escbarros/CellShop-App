@@ -1,6 +1,7 @@
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { INestApplication } from '@nestjs/common';
 import { ErrorBody, ErrorDetail, ErrorResponse, ResponseMeta } from './dto/error.response';
+import { SuccessResponse } from './dto/success.response';
 import { VariantResponse } from '../catalog/dto/variant.response';
 import { CheckoutItemDto } from '../orders/dto/checkout-item.dto';
 import { CreateCheckoutDto } from '../orders/dto/create-checkout.dto';
@@ -32,6 +33,7 @@ export function setupSwagger(app: INestApplication): void {
 
   const document = SwaggerModule.createDocument(app, config, {
     extraModels: [
+      SuccessResponse,
       ErrorResponse,
       ErrorBody,
       ErrorDetail,
