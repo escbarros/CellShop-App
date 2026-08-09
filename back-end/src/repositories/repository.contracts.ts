@@ -14,6 +14,13 @@ export type OrderDraft = {
   recipient: OrderRecipient;
 };
 
+export class DuplicateIdempotencyKeyError extends Error {
+  constructor(readonly idempotencyKey: string) {
+    super(`An order already exists for idempotency key ${idempotencyKey}`);
+    this.name = 'DuplicateIdempotencyKeyError';
+  }
+}
+
 export abstract class CatalogRepository {
   abstract listActiveVariants(): readonly ProductVariant[];
   abstract findVariantBySku(sku: string): ProductVariant | undefined;
