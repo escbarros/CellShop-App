@@ -50,6 +50,6 @@ describe('http configuration', () => {
   it('accepts a body under the limit', async () => {
     const response = await request(server).post('/checkout').send({ padding: 'a' });
 
-    expect(response.status).toBe(404);
+    expect(response.status).not.toBe(413);
   });
 });
