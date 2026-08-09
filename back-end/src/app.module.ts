@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { CatalogModule } from './catalog/catalog.module';
 import { validateEnvironment } from './common/config/environment';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
@@ -14,6 +15,7 @@ import { HealthModule } from './health/health.module';
       validate: validateEnvironment,
     }),
     HealthModule,
+    CatalogModule,
   ],
   controllers: [],
   providers: [
