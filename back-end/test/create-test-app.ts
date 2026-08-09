@@ -11,7 +11,7 @@ const TEST_ENVIRONMENT: Record<string, string> = {
   PORT: '3333',
   CORS_ORIGIN: 'http://localhost:5173',
   CHAOS_ENABLED: 'false',
-  IMAGES_BASE_URL: '/images',
+  IMAGES_BASE_URL: 'http://localhost:3333/images',
 };
 
 function applyTestEnvironment(): void {

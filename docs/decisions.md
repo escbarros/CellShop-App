@@ -33,6 +33,17 @@ em erro, `data` é `null`. Assim, o front sempre sabe que a estrutura vai ser a 
 
 Valores monetários são armazenados como BIGINT em centavos. Por exemplo, R$ 79,90 fica como 7990. Isso evita problemas de precisão comuns em números decimais e torna as operações com dinheiro simples e exatas, sem depender de arredondamentos.
 
+## Imagens dos produtos
+
+As imagens ficam no `back-end/public/images/`, organizadas por SKU. O back-end as disponibiliza como arquivos estáticos e a API retorna apenas as URLs.
+
+A URL base das imagens é configurável por `IMAGES_BASE_URL`. Assim, no futuro, é possível trocar os arquivos locais por um bucket ou CDN sem precisar alterar o restante da aplicação.
+
+## Catálogo de demonstração
+
+O catálogo usa produtos e imagens reais da Gocase para deixar a vitrine mais próxima de um cenário real. As informações que não são disponibilizadas pela loja, como estoque e status, foram inventadas. Cada produto possui uma imagem maior e uma miniatura, evitando carregar imagens desnecessariamente grandes na vitrine.
+
+
 ## Repositórios
 
 Os repositórios foram separados por responsabilidade: catálogo, estoque e pedidos. Cada método tem uma operação equivalente no banco, o que facilita trocar a implementação em memória por MySQL ou Postgres no futuro. O `decrementIfAvailable` também foi pensado para evitar problemas de concorrência. Ele tenta descontar o estoque apenas quando há quantidade suficiente e retorna true ou false conforme o resultado, sem precisar consultar o estoque antes. As abstrações também deixam os testes mais simples, já que cada teste pode usar apenas o repositório que precisa.
