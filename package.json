@@ -12,7 +12,9 @@
     "lint": "npm run lint --prefix back-end",
     "lint:fix": "npm run lint:fix --prefix back-end",
     "format": "npm run format --prefix back-end",
-    "format:check": "npm run format:check --prefix back-end"
+    "format:check": "npm run format:check --prefix back-end",
+    "openapi": "npm run openapi --prefix back-end",
+    "openapi:check": "npm run openapi:check --prefix back-end"
   },
   "lint-staged": {
     "*.{json,yml,yaml}": "prettier --write",

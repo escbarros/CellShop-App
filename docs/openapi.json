@@ -1,0 +1,840 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/products": {
+      "get": {
+        "description": "Returns the storefront catalog. Inactive variants are left out; sold out ones are listed with available set to false, so the shopper sees them without being able to buy.",
+        "operationId": "CatalogController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "The catalog, one entry per active variant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/VariantResponse"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure. The cause is logged under meta.requestId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List every sellable variant",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/products/{sku}": {
+      "get": {
+        "description": "Returns one variant with its current stock, for the product detail screen.",
+        "operationId": "CatalogController_find",
+        "parameters": [
+          {
+            "name": "sku",
+            "required": true,
+            "in": "path",
+            "description": "Stock keeping unit, as listed by GET /products.",
+            "schema": {
+              "example": "CAP-SCRAPBOOK-IP16-AIS-TRA"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested variant.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/VariantResponse"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "SKU_NOT_FOUND. Unknown sku, or a variant that is no longer active.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure. The cause is logged under meta.requestId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Read a single variant by sku",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/checkout": {
+      "post": {
+        "description": "Validates the payload, decrements stock for every item and records the order. Stock is only taken when the whole order can be served, so a partial purchase never happens.",
+        "operationId": "CheckoutController_create",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "description": "Client generated key that identifies this purchase attempt. Retrying with the same key returns the original order instead of buying twice.",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "8f1c2d3e-4a5b-4c6d-8e9f-0a1b2c3d4e5f"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCheckoutDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Idempotent repeat. This Idempotency-Key had already been used, so the order created the first time is returned unchanged and no new stock was taken.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/OrderResponse"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Order placed. Stock was decremented and the idempotency key was recorded.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/OrderResponse"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "MISSING_IDEMPOTENCY_KEY. The request arrived without the Idempotency-Key header.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "SKU_NOT_FOUND. One of the requested skus is unknown or no longer active.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "INSUFFICIENT_STOCK. Someone else took the last units while this order was open.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "VALIDATION_FAILED. The payload broke a field rule; details lists every failure.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure. The cause is logged under meta.requestId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SERVICE_UNAVAILABLE. Injected failure, used to exercise the retry path.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Place an order",
+        "tags": [
+          "checkout"
+        ]
+      }
+    },
+    "/orders/{number}": {
+      "get": {
+        "description": "Returns the order as it was recorded, with sku, name and price frozen at purchase time.",
+        "operationId": "OrdersController_find",
+        "parameters": [
+          {
+            "name": "number",
+            "required": true,
+            "in": "path",
+            "description": "Order number handed back by POST /checkout.",
+            "schema": {
+              "example": "CCS-2026-000417"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested order.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/OrderResponse"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ORDER_NOT_FOUND. No order carries this number.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure. The cause is logged under meta.requestId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Read a placed order",
+        "tags": [
+          "orders"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "CellShop API",
+    "description": "Checkout API for phone case orders.",
+    "version": "0.0.1",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "catalog",
+      "description": "Catalog"
+    },
+    {
+      "name": "checkout",
+      "description": "Purchase."
+    },
+    {
+      "name": "orders",
+      "description": "Placed orders."
+    },
+    {
+      "name": "health",
+      "description": "Service health."
+    }
+  ],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "ErrorDetail": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "description": "Path of the field that failed validation, dotted for nested fields.",
+            "example": "items.0.quantity"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human readable explanation, written in Brazilian Portuguese.",
+            "example": "Informe ao menos uma unidade."
+          }
+        },
+        "required": [
+          "field",
+          "message"
+        ]
+      },
+      "ErrorBody": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Machine readable error code. Clients branch on this, never on the message.",
+            "enum": [
+              "INVALID_BODY",
+              "MISSING_IDEMPOTENCY_KEY",
+              "ROUTE_NOT_FOUND",
+              "SKU_NOT_FOUND",
+              "ORDER_NOT_FOUND",
+              "INSUFFICIENT_STOCK",
+              "VALIDATION_FAILED",
+              "SERVICE_UNAVAILABLE",
+              "INTERNAL_ERROR"
+            ],
+            "example": "INSUFFICIENT_STOCK"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human readable message, written in Brazilian Portuguese and safe to display.",
+            "example": "Não temos essa quantidade em estoque."
+          },
+          "details": {
+            "description": "Field level failures, present only when the error is a validation failure.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ErrorDetail"
+            }
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ]
+      },
+      "ResponseMeta": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "Identifier assigned to the request, echoed back for correlation in logs.",
+            "example": "req_9f2c1a4b7d3e5081"
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "Moment the response was built, in ISO 8601.",
+            "example": "2026-08-09T12:00:00.000Z"
+          }
+        },
+        "required": [
+          "requestId",
+          "timestamp"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Always null when the request failed.",
+            "additionalProperties": true,
+            "nullable": true,
+            "example": null
+          },
+          "error": {
+            "description": "What went wrong.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ErrorBody"
+              }
+            ]
+          },
+          "meta": {
+            "description": "Metadata attached to every response.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResponseMeta"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "error",
+          "meta"
+        ]
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "object",
+            "description": "Payload of the request. Its shape changes per route.",
+            "additionalProperties": true,
+            "nullable": true
+          },
+          "error": {
+            "type": "object",
+            "description": "Always null when the request succeeded.",
+            "additionalProperties": true,
+            "nullable": true,
+            "example": null
+          },
+          "meta": {
+            "description": "Metadata attached to every response.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ResponseMeta"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data",
+          "error",
+          "meta"
+        ]
+      },
+      "VariantResponse": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "description": "Stock keeping unit. Identifies the variant in every other endpoint.",
+            "example": "CAP-SCRAPBOOK-IP16-AIS-TRA"
+          },
+          "name": {
+            "type": "string",
+            "description": "Commercial name shown on the storefront, written in Brazilian Portuguese.",
+            "example": "Floral Scrapbook · iPhone 16"
+          },
+          "description": {
+            "type": "string",
+            "description": "Long description shown on the product detail, written in Brazilian Portuguese.",
+            "example": "Colagem de flores prensadas, fitas e polaroides sobre fundo bege, com espaço para nome e fotos."
+          },
+          "priceCents": {
+            "type": "integer",
+            "description": "Unit price as an integer amount of cents. R$ 79,90 is 7990.",
+            "example": 7990
+          },
+          "formattedPrice": {
+            "type": "string",
+            "description": "Unit price already formatted as Brazilian currency, so the client never divides by 100.",
+            "example": "R$ 79,90"
+          },
+          "availableQty": {
+            "type": "integer",
+            "description": "Units currently on hand. Zero means sold out, not hidden.",
+            "example": 12
+          },
+          "available": {
+            "type": "boolean",
+            "description": "Whether the variant can be bought right now, meaning availableQty is above zero.",
+            "example": true
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "Absolute URL of the full size image, built from IMAGES_BASE_URL.",
+            "example": "http://localhost:3333/images/cap-scrapbook-ip16-ais-tra.jpg"
+          },
+          "thumbUrl": {
+            "type": "string",
+            "description": "Absolute URL of the thumbnail, used by the storefront listing.",
+            "example": "http://localhost:3333/images/cap-scrapbook-ip16-ais-tra-thumb.jpg"
+          }
+        },
+        "required": [
+          "sku",
+          "name",
+          "description",
+          "priceCents",
+          "formattedPrice",
+          "availableQty",
+          "available",
+          "imageUrl",
+          "thumbUrl"
+        ]
+      },
+      "OrderItemResponse": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "description": "Stock keeping unit frozen at purchase time, so the order survives catalog edits.",
+            "example": "CAP-SCRAPBOOK-IP16-AIS-TRA"
+          },
+          "name": {
+            "type": "string",
+            "description": "Product name frozen at purchase time, written in Brazilian Portuguese.",
+            "example": "Floral Scrapbook · iPhone 16"
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Units bought of this variant.",
+            "example": 2
+          },
+          "unitPriceCents": {
+            "type": "integer",
+            "description": "Unit price frozen at purchase time, as an integer amount of cents.",
+            "example": 7990
+          },
+          "subtotalCents": {
+            "type": "integer",
+            "description": "Line total in cents, meaning unitPriceCents multiplied by quantity.",
+            "example": 15980
+          }
+        },
+        "required": [
+          "sku",
+          "name",
+          "quantity",
+          "unitPriceCents",
+          "subtotalCents"
+        ]
+      },
+      "OrderResponse": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "description": "Human readable order number, the reference the customer quotes to support.",
+            "example": "CCS-2026-000417"
+          },
+          "status": {
+            "type": "string",
+            "description": "Where the order stands. Only PENDING can still move to another status.",
+            "enum": [
+              "PENDING",
+              "CONFIRMED",
+              "CANCELLED",
+              "FAILED"
+            ],
+            "example": "CONFIRMED"
+          },
+          "items": {
+            "description": "Lines of the order, with sku, name and price frozen at purchase time.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemResponse"
+            }
+          },
+          "subtotalCents": {
+            "type": "integer",
+            "description": "Sum of every line total, as an integer amount of cents.",
+            "example": 15980
+          },
+          "shippingCents": {
+            "type": "integer",
+            "description": "Shipping in cents. Flat 1990, or 0 when subtotalCents is at least 19900.",
+            "example": 1990
+          },
+          "discountCents": {
+            "type": "integer",
+            "description": "Discount in cents. Always 0 in this delivery, there is no coupon yet.",
+            "example": 0
+          },
+          "totalCents": {
+            "type": "integer",
+            "description": "What the customer pays: subtotalCents plus shippingCents minus discountCents.",
+            "example": 17970
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Moment the order was placed, in ISO 8601.",
+            "example": "2026-08-09T12:00:03.104Z"
+          }
+        },
+        "required": [
+          "number",
+          "status",
+          "items",
+          "subtotalCents",
+          "shippingCents",
+          "discountCents",
+          "totalCents",
+          "createdAt"
+        ]
+      },
+      "CheckoutItemDto": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string",
+            "description": "Stock keeping unit of the variant being bought, as returned by GET /products.",
+            "example": "CAP-SCRAPBOOK-IP16-AIS-TRA",
+            "maxLength": 60
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "How many units of this variant to buy.",
+            "example": 2,
+            "minimum": 1,
+            "maximum": 10
+          }
+        },
+        "required": [
+          "sku",
+          "quantity"
+        ]
+      },
+      "RecipientDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Full name of whoever receives the order.",
+            "example": "Ana Beatriz Nogueira",
+            "minLength": 3,
+            "maxLength": 120
+          },
+          "taxId": {
+            "type": "string",
+            "description": "Brazilian CPF, eleven digits with no punctuation.",
+            "example": "39053344705",
+            "pattern": "^\\d{11}$"
+          },
+          "email": {
+            "type": "string",
+            "description": "Contact email, where the order confirmation is sent.",
+            "example": "ana.nogueira@example.com",
+            "maxLength": 150
+          },
+          "phone": {
+            "type": "string",
+            "description": "Contact phone with area code. Optional.",
+            "example": "11987654321",
+            "maxLength": 20
+          },
+          "zipCode": {
+            "type": "string",
+            "description": "Brazilian postal code, eight digits with no dash.",
+            "example": "01310930",
+            "pattern": "^\\d{8}$"
+          },
+          "street": {
+            "type": "string",
+            "description": "Street name of the delivery address.",
+            "example": "Avenida Paulista",
+            "maxLength": 150
+          },
+          "number": {
+            "type": "string",
+            "description": "Street number. Text, because addresses like 1578-A exist.",
+            "example": "1578",
+            "maxLength": 20
+          },
+          "complement": {
+            "type": "string",
+            "description": "Apartment, block or reference point. Optional.",
+            "example": "Apto 92, torre B",
+            "maxLength": 60
+          },
+          "district": {
+            "type": "string",
+            "description": "Neighbourhood of the delivery address.",
+            "example": "Bela Vista",
+            "maxLength": 80
+          },
+          "city": {
+            "type": "string",
+            "description": "City of the delivery address.",
+            "example": "São Paulo",
+            "maxLength": 80
+          },
+          "state": {
+            "type": "string",
+            "description": "State as the two letter Brazilian abbreviation.",
+            "example": "SP",
+            "pattern": "^[A-Za-z]{2}$"
+          }
+        },
+        "required": [
+          "name",
+          "taxId",
+          "email",
+          "zipCode",
+          "street",
+          "number",
+          "district",
+          "city",
+          "state"
+        ]
+      },
+      "CreateCheckoutDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "Lines of the order. Each sku may appear only once, with its own quantity.",
+            "minItems": 1,
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CheckoutItemDto"
+            }
+          },
+          "recipient": {
+            "description": "Who receives the order and where it is delivered.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecipientDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "items",
+          "recipient"
+        ]
+      },
+      "OrderEventResponse": {
+        "type": "object",
+        "properties": {
+          "previousStatus": {
+            "type": "string",
+            "description": "Status the order held before this event. Null on the event that created it.",
+            "enum": [
+              "PENDING",
+              "CONFIRMED",
+              "CANCELLED",
+              "FAILED"
+            ],
+            "nullable": true,
+            "example": "PENDING"
+          },
+          "newStatus": {
+            "type": "string",
+            "description": "Status the order moved to.",
+            "enum": [
+              "PENDING",
+              "CONFIRMED",
+              "CANCELLED",
+              "FAILED"
+            ],
+            "example": "CONFIRMED"
+          },
+          "source": {
+            "type": "string",
+            "description": "What caused the transition, such as the checkout flow or an operator action.",
+            "example": "checkout"
+          },
+          "message": {
+            "type": "string",
+            "description": "Explanation of the transition, written in Brazilian Portuguese.",
+            "example": "Estoque reservado e pedido confirmado."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Moment the transition happened, in ISO 8601.",
+            "example": "2026-08-09T12:00:03.117Z"
+          }
+        },
+        "required": [
+          "previousStatus",
+          "newStatus",
+          "source",
+          "message",
+          "createdAt"
+        ]
+      }
+    }
+  }
+}

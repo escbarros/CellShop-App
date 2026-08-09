@@ -1,4 +1,4 @@
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { DocumentBuilder, OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { INestApplication } from '@nestjs/common';
 import { ErrorBody, ErrorDetail, ErrorResponse, ResponseMeta } from './dto/error.response';
 import { SuccessResponse } from './dto/success.response';
@@ -20,7 +20,7 @@ export const API_TAGS = {
   health: 'health',
 } as const;
 
-export function setupSwagger(app: INestApplication): void {
+export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
   const config = new DocumentBuilder()
     .setTitle('CellShop API')
     .setDescription('Checkout API for phone case orders.')
@@ -31,7 +31,7 @@ export function setupSwagger(app: INestApplication): void {
     .addTag(API_TAGS.health, 'Service health.')
     .build();
 
-  const document = SwaggerModule.createDocument(app, config, {
+  return SwaggerModule.createDocument(app, config, {
     extraModels: [
       SuccessResponse,
       ErrorResponse,
@@ -47,6 +47,8 @@ export function setupSwagger(app: INestApplication): void {
       OrderEventResponse,
     ],
   });
+}
 
-  SwaggerModule.setup(SWAGGER_PATH, app, document);
+export function setupSwagger(app: INestApplication): void {
+  SwaggerModule.setup(SWAGGER_PATH, app, createOpenApiDocument(app));
 }
