@@ -110,10 +110,12 @@ describe('checkout payload validation', () => {
   });
 
   it('lets a valid payload through unchanged', async () => {
-    const response = await postCheckout(validCheckoutPayload()).expect(501);
-    const payload = response.body as ApiResponse<never>;
+    const response = await postCheckout(validCheckoutPayload()).expect(201);
+    const payload = response.body as ApiResponse<{ items: { quantity: number }[] }>;
 
-    expect(payload.error?.code).not.toBe('VALIDATION_FAILED');
-    expect(payload.error?.details).toBeUndefined();
+    expect(payload.error).toBeNull();
+    expect(payload.data?.items).toEqual([
+      expect.objectContaining({ sku: 'CAP-SCRAPBOOK-IP16-AIS-TRA', quantity: 2 }),
+    ]);
   });
 });

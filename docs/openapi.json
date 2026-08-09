@@ -134,9 +134,9 @@
         "parameters": [
           {
             "name": "Idempotency-Key",
+            "required": true,
             "in": "header",
             "description": "Client generated key that identifies this purchase attempt. Retrying with the same key returns the original order instead of buying twice.",
-            "required": true,
             "schema": {
               "type": "string",
               "example": "8f1c2d3e-4a5b-4c6d-8e9f-0a1b2c3d4e5f"

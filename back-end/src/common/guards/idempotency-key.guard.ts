@@ -2,7 +2,7 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Request } from 'express';
 import { MissingIdempotencyKeyError } from '../errors/domain.errors';
 
-export const IDEMPOTENCY_KEY_HEADER = 'idempotency-key';
+export const IDEMPOTENCY_KEY_HEADER = 'Idempotency-Key';
 
 @Injectable()
 export class IdempotencyKeyGuard implements CanActivate {

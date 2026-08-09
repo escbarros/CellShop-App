@@ -22,3 +22,7 @@ export type ProductVariant = {
   thumbUrl: string;
   active: boolean;
 };
+
+export function variantDisplayName(product: Product, variant: ProductVariant): string {
+  return `${product.name} · ${variant.device}`;
+}

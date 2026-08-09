@@ -1,22 +1,20 @@
-import {
-  Body,
-  Controller,
-  HttpCode,
-  HttpStatus,
-  NotImplementedException,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Headers, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiEnvelope, ApiEnvelopeError } from '../common/dto/api-envelope.decorator';
-import { IdempotencyKeyGuard } from '../common/guards/idempotency-key.guard';
+import {
+  IDEMPOTENCY_KEY_HEADER,
+  IdempotencyKeyGuard,
+} from '../common/guards/idempotency-key.guard';
 import { API_TAGS } from '../common/swagger';
+import { CheckoutService } from './checkout.service';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { OrderResponse } from './dto/order.response';
 
 @ApiTags(API_TAGS.checkout)
 @Controller('checkout')
 export class CheckoutController {
+  constructor(private readonly checkout: CheckoutService) {}
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @UseGuards(IdempotencyKeyGuard)
@@ -26,7 +24,7 @@ export class CheckoutController {
       'Validates the payload, decrements stock for every item and records the order. Stock is only taken when the whole order can be served, so a partial purchase never happens.',
   })
   @ApiHeader({
-    name: 'Idempotency-Key',
+    name: IDEMPOTENCY_KEY_HEADER,
     required: true,
     description:
       'Client generated key that identifies this purchase attempt. Retrying with the same key returns the original order instead of buying twice.',
@@ -68,7 +66,10 @@ export class CheckoutController {
     status: HttpStatus.SERVICE_UNAVAILABLE,
     description: 'SERVICE_UNAVAILABLE. Injected failure, used to exercise the retry path.',
   })
-  create(@Body() _payload: CreateCheckoutDto): OrderResponse {
-    throw new NotImplementedException();
+  create(
+    @Body() payload: CreateCheckoutDto,
+    @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey: string,
+  ): OrderResponse {
+    return this.checkout.create(payload, idempotencyKey);
   }
 }

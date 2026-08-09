@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { SkuNotFoundError } from '../common/errors/domain.errors';
 import { formatBRL } from '../common/money';
 import { CatalogRepository, StockRepository } from '../repositories/repository.contracts';
-import { ProductVariant } from './catalog.model';
+import { ProductVariant, variantDisplayName } from './catalog.model';
 import { VariantResponse } from './dto/variant.response';
 
 @Injectable()
@@ -37,7 +37,7 @@ export class CatalogService {
 
     return {
       sku: variant.sku,
-      name: `${product.name} · ${variant.device}`,
+      name: variantDisplayName(product, variant),
       description: product.description,
       priceCents: variant.priceCents,
       formattedPrice: formatBRL(variant.priceCents),

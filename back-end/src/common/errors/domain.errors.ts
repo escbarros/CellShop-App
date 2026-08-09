@@ -21,8 +21,8 @@ export class RouteNotFoundError extends AppException {
 }
 
 export class SkuNotFoundError extends AppException {
-  constructor() {
-    super(ERROR_CODES.SKU_NOT_FOUND);
+  constructor(details?: ApiErrorDetail[]) {
+    super(ERROR_CODES.SKU_NOT_FOUND, details);
   }
 }
 

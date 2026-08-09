@@ -1,29 +1,14 @@
 import { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
 import { ApiResponse } from '../src/common/http/api-response';
-import {
-  IDEMPOTENCY_KEY_HEADER,
-  SAMPLE_IDEMPOTENCY_KEY,
-  validCheckoutPayload,
-} from './checkout-payload';
 import { createTestApp } from './create-test-app';
 
 type DeclaredRoute = {
   method: 'get' | 'post';
   path: string;
-  headers?: Record<string, string>;
-  body?: object;
 };
 
-const DECLARED_ROUTES: DeclaredRoute[] = [
-  {
-    method: 'post',
-    path: '/checkout',
-    headers: { [IDEMPOTENCY_KEY_HEADER]: SAMPLE_IDEMPOTENCY_KEY },
-    body: validCheckoutPayload(),
-  },
-  { method: 'get', path: '/orders/CCS-2026-000417' },
-];
+const DECLARED_ROUTES: DeclaredRoute[] = [{ method: 'get', path: '/orders/CCS-2026-000417' }];
 
 describe('controller skeletons', () => {
   let app: NestExpressApplication;
@@ -38,12 +23,8 @@ describe('controller skeletons', () => {
 
   it.each(DECLARED_ROUTES)(
     'every declared route responds 501 before implementation: $method $path',
-    async ({ method, path, headers, body }) => {
-      const call = request(app.getHttpServer())
-        [method](path)
-        .set(headers ?? {});
-
-      await (body ? call.send(body) : call).expect(501);
+    async ({ method, path }) => {
+      await request(app.getHttpServer())[method](path).expect(501);
     },
   );
 

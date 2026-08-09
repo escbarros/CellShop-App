@@ -46,7 +46,7 @@ export type OrderRecipient = {
   name: string;
   taxId: string;
   email: string;
-  phone: string;
+  phone: string | null;
   zipCode: string;
   street: string;
   number: string;
