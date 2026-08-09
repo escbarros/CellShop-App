@@ -135,6 +135,27 @@ describe('ProductDetail', () => {
     expect(increase).toBeDisabled();
   });
 
+  it('shuts the add button once the variant is in the cart', async () => {
+    stubApi([{ path: `/products/${SKU}`, data: makeVariant({ availableQty: 12 }) }]);
+
+    renderWithProviders(<ProductDetail sku={SKU} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: /adicionar no carrinho/i }));
+
+    expect(screen.getByRole('button', { name: 'Já está no carrinho' })).toBeDisabled();
+    expect(useCartStore.getState().items).toEqual([{ sku: SKU, quantity: 1 }]);
+  });
+
+  it('sends the shopper to the cart to change a quantity already chosen', async () => {
+    useCartStore.setState({ items: [{ sku: SKU, quantity: 3 }] });
+    stubApi([{ path: `/products/${SKU}`, data: makeVariant({ availableQty: 12 }) }]);
+
+    renderWithProviders(<ProductDetail sku={SKU} />);
+
+    expect(await screen.findByText(/3 unidades no carrinho/i)).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Aumentar quantidade' })).not.toBeInTheDocument();
+  });
+
   it('offers no way to add a sold-out variant to the cart', async () => {
     stubApi([
       { path: `/products/${SKU}`, data: makeVariant({ availableQty: 0, available: false }) },

@@ -1,8 +1,8 @@
-import { ShoppingBag } from 'lucide-react';
+import { Check, ShoppingBag } from 'lucide-react';
 import { useState } from 'react';
 import type { Variant } from '../api/contract';
 import { useCartDrawerStore } from '../store/cart-drawer-store';
-import { useCartStore } from '../store/cart-store';
+import { useCartQuantityOf, useCartStore } from '../store/cart-store';
 import { ProductImage } from './ProductImage';
 import { QuantityStepper } from './QuantityStepper';
 import { StockBadge } from './StockBadge';
@@ -18,9 +18,16 @@ export function ProductDetailView({ variant }: ProductDetailViewProps) {
   const [quantity, setQuantity] = useState(1);
   const addToCart = useCartStore((state) => state.add);
   const openCart = useCartDrawerStore((state) => state.open);
+  const cartQuantity = useCartQuantityOf(variant.sku);
 
   const soldOut = !variant.available;
+  const alreadyInCart = !soldOut && cartQuantity > 0;
   const maxUnits = Math.min(MAX_UNITS_PER_ORDER, variant.availableQty);
+  const addButtonTone = soldOut
+    ? 'cursor-not-allowed border border-line bg-tile text-ink-faint'
+    : alreadyInCart
+      ? 'cursor-not-allowed border border-ink/25 bg-tile text-ink-soft'
+      : 'bg-ink text-surface hover:bg-ink/90';
 
   function handleAddToCart() {
     addToCart(variant.sku, quantity);
@@ -53,6 +60,12 @@ export function ProductDetailView({ variant }: ProductDetailViewProps) {
             <p className="text-sm text-ink-soft">
               Esta estampa está sem estoque. Volte daqui a pouco ou escolha outra na vitrine.
             </p>
+          ) : alreadyInCart ? (
+            <p className="text-sm text-ink-soft">
+              {cartQuantity === 1
+                ? 'Você já tem 1 unidade no carrinho. Ajuste a quantidade por lá.'
+                : `Você já tem ${cartQuantity} unidades no carrinho. Ajuste a quantidade por lá.`}
+            </p>
           ) : (
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-4">
@@ -79,16 +92,17 @@ export function ProductDetailView({ variant }: ProductDetailViewProps) {
 
           <button
             type="button"
-            disabled={soldOut}
+            disabled={soldOut || alreadyInCart}
             onClick={handleAddToCart}
-            className={`mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${
-              soldOut
-                ? 'cursor-not-allowed border border-line bg-tile text-ink-faint'
-                : 'bg-ink text-surface hover:bg-ink/90'
-            }`}
+            className={`mt-6 flex h-12 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink ${addButtonTone}`}
           >
             {soldOut ? (
               'Esgotado'
+            ) : alreadyInCart ? (
+              <>
+                <Check aria-hidden="true" className="h-4 w-4" strokeWidth={2} />
+                Já está no carrinho
+              </>
             ) : (
               <>
                 <ShoppingBag aria-hidden="true" className="h-4 w-4" strokeWidth={1.8} />

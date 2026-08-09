@@ -91,4 +91,49 @@ describe('ProductCard', () => {
 
     expect(useCartStore.getState().items).toEqual([{ sku: 'CAP-BLOOM-IP16-AIS-TRA', quantity: 1 }]);
   });
+
+  it('shuts the add button once the variant is in the cart', async () => {
+    renderWithProviders(<ProductCard variant={makeVariant()} />);
+
+    await userEvent.click(screen.getByRole('button', { name: /adicionar/i }));
+
+    expect(screen.getByRole('button', { name: 'Já está no carrinho' })).toBeDisabled();
+  });
+
+  it('never stacks units past the stock by repeating the click', async () => {
+    renderWithProviders(
+      <ProductCard variant={makeVariant({ sku: 'CAP-BLOOM-IP16-AIS-TRA', availableQty: 1 })} />,
+    );
+
+    const addButton = screen.getByRole('button', { name: /adicionar/i });
+    await userEvent.click(addButton);
+    await userEvent.click(addButton);
+    await userEvent.click(addButton);
+
+    expect(useCartStore.getState().items).toEqual([{ sku: 'CAP-BLOOM-IP16-AIS-TRA', quantity: 1 }]);
+  });
+
+  it('renders already shut when the stored cart holds the variant', () => {
+    useCartStore.setState({ items: [{ sku: 'CAP-BLOOM-IP16-AIS-TRA', quantity: 2 }] });
+
+    renderWithProviders(<ProductCard variant={makeVariant({ sku: 'CAP-BLOOM-IP16-AIS-TRA' })} />);
+
+    expect(screen.getByRole('button', { name: 'Já está no carrinho' })).toBeDisabled();
+  });
+
+  it('calls a sold-out variant sold out even when it sits in the cart', () => {
+    useCartStore.setState({ items: [{ sku: 'CAP-BLOOM-IP16-AIS-TRA', quantity: 1 }] });
+
+    renderWithProviders(
+      <ProductCard
+        variant={makeVariant({
+          sku: 'CAP-BLOOM-IP16-AIS-TRA',
+          availableQty: 0,
+          available: false,
+        })}
+      />,
+    );
+
+    expect(screen.getByRole('button', { name: 'Esgotado' })).toBeDisabled();
+  });
 });
