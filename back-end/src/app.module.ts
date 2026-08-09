@@ -6,6 +6,7 @@ import { validateEnvironment } from './common/config/environment';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { ApiResponseInterceptor } from './common/interceptors/api-response.interceptor';
 import { HealthModule } from './health/health.module';
+import { StockModule } from './stock/stock.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { HealthModule } from './health/health.module';
     }),
     HealthModule,
     CatalogModule,
+    StockModule,
   ],
   controllers: [],
   providers: [

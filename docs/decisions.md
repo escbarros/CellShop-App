@@ -49,3 +49,4 @@ O catálogo usa produtos e imagens reais da Gocase para deixar a vitrine mais pr
 Os repositórios foram separados por responsabilidade: catálogo, estoque e pedidos. Cada método tem uma operação equivalente no banco, o que facilita trocar a implementação em memória por MySQL ou Postgres no futuro. O `decrementIfAvailable` também foi pensado para evitar problemas de concorrência. Ele tenta descontar o estoque apenas quando há quantidade suficiente e retorna true ou false conforme o resultado, sem precisar consultar o estoque antes. As abstrações também deixam os testes mais simples, já que cada teste pode usar apenas o repositório que precisa.
 
 
+
