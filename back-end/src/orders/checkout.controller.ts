@@ -1,5 +1,15 @@
-import { Body, Controller, Headers, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBody, ApiHeader, ApiOperation, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { ApiEnvelope, ApiEnvelopeError } from '../common/dto/api-envelope.decorator';
 import {
   IDEMPOTENCY_KEY_HEADER,
@@ -69,7 +79,14 @@ export class CheckoutController {
   create(
     @Body() payload: CreateCheckoutDto,
     @Headers(IDEMPOTENCY_KEY_HEADER) idempotencyKey: string,
+    @Res({ passthrough: true }) response: Response,
   ): OrderResponse {
-    return this.checkout.create(payload, idempotencyKey);
+    const outcome = this.checkout.create(payload, idempotencyKey);
+
+    if (outcome.replayed) {
+      response.status(HttpStatus.OK);
+    }
+
+    return outcome.order;
   }
 }

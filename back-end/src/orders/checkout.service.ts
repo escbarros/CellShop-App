@@ -4,6 +4,7 @@ import { InsufficientStockError, SkuNotFoundError } from '../common/errors/domai
 import { Cents, multiply, sum } from '../common/money';
 import {
   CatalogRepository,
+  DuplicateIdempotencyKeyError,
   OrderAggregate,
   OrderDraft,
   OrderRepository,
@@ -74,6 +75,11 @@ function toResponse(aggregate: OrderAggregate): OrderResponse {
   };
 }
 
+export type CheckoutOutcome = {
+  order: OrderResponse;
+  replayed: boolean;
+};
+
 @Injectable()
 export class CheckoutService {
   constructor(
@@ -82,7 +88,13 @@ export class CheckoutService {
     private readonly stock: StockRepository,
   ) {}
 
-  create(payload: CreateCheckoutDto, idempotencyKey: string): OrderResponse {
+  create(payload: CreateCheckoutDto, idempotencyKey: string): CheckoutOutcome {
+    const known = this.orders.findByIdempotencyKey(idempotencyKey);
+
+    if (known !== undefined) {
+      return { order: toResponse(known), replayed: true };
+    }
+
     const items = payload.items.map((line, index) => this.freeze(line, index));
 
     this.take(items);
@@ -106,7 +118,27 @@ export class CheckoutService {
       recipient: toRecipient(payload.recipient),
     };
 
-    return toResponse(this.orders.save(draft));
+    return this.record(draft);
+  }
+
+  private record(draft: OrderDraft): CheckoutOutcome {
+    try {
+      return { order: toResponse(this.orders.save(draft)), replayed: false };
+    } catch (error) {
+      if (!(error instanceof DuplicateIdempotencyKeyError)) {
+        throw error;
+      }
+
+      const known = this.orders.findByIdempotencyKey(error.idempotencyKey);
+
+      if (known === undefined) {
+        throw error;
+      }
+
+      this.release(draft.items);
+
+      return { order: toResponse(known), replayed: true };
+    }
   }
 
   private take(items: readonly OrderItem[]): void {
@@ -119,9 +151,7 @@ export class CheckoutService {
         continue;
       }
 
-      for (const previous of taken) {
-        this.stock.restore(previous.variantId, previous.quantity);
-      }
+      this.release(taken);
 
       const available = this.stock.find(item.variantId)?.availableQty ?? NOTHING_AVAILABLE;
 
@@ -133,6 +163,12 @@ export class CheckoutService {
           available,
         },
       ]);
+    }
+  }
+
+  private release(items: readonly OrderItem[]): void {
+    for (const item of items) {
+      this.stock.restore(item.variantId, item.quantity);
     }
   }
 
