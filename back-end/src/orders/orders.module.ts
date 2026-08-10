@@ -6,11 +6,16 @@ import { StockModule } from '../stock/stock.module';
 import { CheckoutController } from './checkout.controller';
 import { CheckoutService } from './checkout.service';
 import { OrdersController } from './orders.controller';
+import { OrdersService } from './orders.service';
 
 @Module({
   imports: [CatalogModule, StockModule],
   controllers: [CheckoutController, OrdersController],
-  providers: [CheckoutService, { provide: OrderRepository, useClass: InMemoryOrderRepository }],
+  providers: [
+    CheckoutService,
+    OrdersService,
+    { provide: OrderRepository, useClass: InMemoryOrderRepository },
+  ],
   exports: [OrderRepository],
 })
 export class OrdersModule {}

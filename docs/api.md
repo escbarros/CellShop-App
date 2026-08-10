@@ -9,6 +9,7 @@ As principais rotas são:
 | GET    | `/products`        | Lista produtos ativos              |
 | GET    | `/products/{sku}`  | Consulta um produto                |
 | POST   | `/checkout`        | Cria um pedido e baixa o estoque   |
+| GET    | `/orders`          | Lista os pedidos já feitos         |
 | GET    | `/orders/{number}` | Consulta um pedido                 |
 | GET    | `/health`          | Verifica se a API está funcionando |
 

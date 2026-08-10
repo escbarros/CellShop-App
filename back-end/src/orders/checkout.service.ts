@@ -18,6 +18,7 @@ import {
   OrderResponse,
 } from './dto/order.response';
 import { RecipientDto } from './dto/recipient.dto';
+import { toOrderResponse } from './order.mapper';
 import {
   ORDER_STATUSES,
   OrderEvent,
@@ -99,25 +100,6 @@ function toRecipient(recipient: RecipientDto): OrderRecipient {
   };
 }
 
-function toResponse(aggregate: OrderAggregate): OrderResponse {
-  return {
-    number: aggregate.order.number,
-    status: aggregate.order.status,
-    items: aggregate.items.map((item) => ({
-      sku: item.skuSnapshot,
-      name: item.nameSnapshot,
-      quantity: item.quantity,
-      unitPriceCents: item.unitPriceCents,
-      subtotalCents: item.subtotalCents,
-    })),
-    subtotalCents: aggregate.order.subtotalCents,
-    shippingCents: aggregate.order.shippingCents,
-    discountCents: aggregate.order.discountCents,
-    totalCents: aggregate.order.totalCents,
-    createdAt: aggregate.order.createdAt.toISOString(),
-  };
-}
-
 export type CheckoutOutcome = {
   order: OrderResponse;
   replayed: boolean;
@@ -135,7 +117,7 @@ export class CheckoutService {
     const known = this.orders.findByIdempotencyKey(idempotencyKey);
 
     if (known !== undefined) {
-      return { order: toResponse(known), replayed: true };
+      return { order: toOrderResponse(known), replayed: true };
     }
 
     const items = payload.items.map((line, index) => this.freeze(line, index));
@@ -194,7 +176,7 @@ export class CheckoutService {
 
       this.trail(aggregate, closingMessage);
 
-      return { order: toResponse(aggregate), replayed: false };
+      return { order: toOrderResponse(aggregate), replayed: false };
     } catch (error) {
       if (!(error instanceof DuplicateIdempotencyKeyError)) {
         throw error;
@@ -206,7 +188,7 @@ export class CheckoutService {
         throw error;
       }
 
-      return { order: toResponse(known), replayed: true };
+      return { order: toOrderResponse(known), replayed: true };
     }
   }
 

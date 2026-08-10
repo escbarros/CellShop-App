@@ -263,24 +263,14 @@
         ]
       }
     },
-    "/orders/{number}": {
+    "/orders": {
       "get": {
-        "description": "Returns the order as it was recorded, with sku, name and price frozen at purchase time.",
-        "operationId": "OrdersController_find",
-        "parameters": [
-          {
-            "name": "number",
-            "required": true,
-            "in": "path",
-            "description": "Order number handed back by POST /checkout.",
-            "schema": {
-              "example": "CCS-2026-000417"
-            }
-          }
-        ],
+        "description": "Returns every order placed so far, newest first, summarised. The route has no authentication, so the summary carries no recipient data; use GET /orders/:number for the full record.",
+        "operationId": "OrdersController_list",
+        "parameters": [],
         "responses": {
           "200": {
-            "description": "The requested order.",
+            "description": "The orders placed so far, newest first.",
             "content": {
               "application/json": {
                 "schema": {
@@ -291,7 +281,65 @@
                     {
                       "properties": {
                         "data": {
-                          "$ref": "#/components/schemas/OrderResponse"
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/OrderSummaryResponse"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected failure. The cause is logged under meta.requestId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        },
+        "summary": "List placed orders",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/orders/{number}": {
+      "get": {
+        "description": "Returns the order as it was recorded, with sku, name and price frozen at purchase time, the recipient with a masked tax id, and the full transition trail.",
+        "operationId": "OrdersController_find",
+        "parameters": [
+          {
+            "name": "number",
+            "required": true,
+            "in": "path",
+            "description": "Order number handed back by POST /checkout.",
+            "schema": {
+              "example": "CCS-2026-000417",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested order, with its recipient and its event trail.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/SuccessResponse"
+                    },
+                    {
+                      "properties": {
+                        "data": {
+                          "$ref": "#/components/schemas/OrderDetailResponse"
                         }
                       }
                     }
@@ -796,6 +844,124 @@
           "recipient"
         ]
       },
+      "OrderSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "description": "Human readable order number, the reference the customer quotes to support.",
+            "example": "CCS-2026-000417"
+          },
+          "status": {
+            "type": "string",
+            "description": "Where the order stands.",
+            "enum": [
+              "PENDING",
+              "CONFIRMED",
+              "CANCELLED",
+              "FAILED"
+            ],
+            "example": "CONFIRMED"
+          },
+          "itemCount": {
+            "type": "integer",
+            "description": "How many units the order carries, summed across every line.",
+            "example": 3
+          },
+          "totalCents": {
+            "type": "integer",
+            "description": "What the customer pays, as an integer amount of cents.",
+            "example": 17970
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Moment the order was placed, in ISO 8601.",
+            "example": "2026-08-09T12:00:03.104Z"
+          }
+        },
+        "required": [
+          "number",
+          "status",
+          "itemCount",
+          "totalCents",
+          "createdAt"
+        ]
+      },
+      "RecipientResponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Full name of whoever receives the order.",
+            "example": "Ana Beatriz Nogueira"
+          },
+          "taxId": {
+            "type": "string",
+            "description": "CPF with the first three and last two digits hidden. The route has no authentication, so it never hands back a whole document.",
+            "example": "***.533.447-**"
+          },
+          "email": {
+            "type": "string",
+            "description": "Contact email recorded with the order.",
+            "example": "ana.nogueira@example.com"
+          },
+          "phone": {
+            "type": "object",
+            "description": "Contact phone recorded with the order, or null when none was given.",
+            "nullable": true,
+            "example": "11987654321"
+          },
+          "zipCode": {
+            "type": "string",
+            "description": "Zip code, eight digits with no punctuation.",
+            "example": "01310930"
+          },
+          "street": {
+            "type": "string",
+            "description": "Street name of the delivery address.",
+            "example": "Avenida Paulista"
+          },
+          "number": {
+            "type": "string",
+            "description": "Street number of the delivery address.",
+            "example": "1578"
+          },
+          "complement": {
+            "type": "object",
+            "description": "Extra address information, or null when none was given.",
+            "nullable": true,
+            "example": "Apto 92, torre B"
+          },
+          "district": {
+            "type": "string",
+            "description": "District of the delivery address.",
+            "example": "Bela Vista"
+          },
+          "city": {
+            "type": "string",
+            "description": "City of the delivery address.",
+            "example": "São Paulo"
+          },
+          "state": {
+            "type": "string",
+            "description": "Two letter state code.",
+            "example": "SP"
+          }
+        },
+        "required": [
+          "name",
+          "taxId",
+          "email",
+          "phone",
+          "zipCode",
+          "street",
+          "number",
+          "complement",
+          "district",
+          "city",
+          "state"
+        ]
+      },
       "OrderEventResponse": {
         "type": "object",
         "properties": {
@@ -844,6 +1010,86 @@
           "source",
           "message",
           "createdAt"
+        ]
+      },
+      "OrderDetailResponse": {
+        "type": "object",
+        "properties": {
+          "number": {
+            "type": "string",
+            "description": "Human readable order number, the reference the customer quotes to support.",
+            "example": "CCS-2026-000417"
+          },
+          "status": {
+            "type": "string",
+            "description": "Where the order stands. Only PENDING can still move to another status.",
+            "enum": [
+              "PENDING",
+              "CONFIRMED",
+              "CANCELLED",
+              "FAILED"
+            ],
+            "example": "CONFIRMED"
+          },
+          "items": {
+            "description": "Lines of the order, with sku, name and price frozen at purchase time.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemResponse"
+            }
+          },
+          "subtotalCents": {
+            "type": "integer",
+            "description": "Sum of every line total, as an integer amount of cents.",
+            "example": 15980
+          },
+          "shippingCents": {
+            "type": "integer",
+            "description": "Shipping in cents. Flat 1990, or 0 when subtotalCents is at least 19900.",
+            "example": 1990
+          },
+          "discountCents": {
+            "type": "integer",
+            "description": "Discount in cents. Always 0 in this delivery, there is no coupon yet.",
+            "example": 0
+          },
+          "totalCents": {
+            "type": "integer",
+            "description": "What the customer pays: subtotalCents plus shippingCents minus discountCents.",
+            "example": 17970
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Moment the order was placed, in ISO 8601.",
+            "example": "2026-08-09T12:00:03.104Z"
+          },
+          "recipient": {
+            "description": "Who receives the order, with the tax id masked.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RecipientResponse"
+              }
+            ]
+          },
+          "events": {
+            "description": "Every status transition the order went through, oldest first.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderEventResponse"
+            }
+          }
+        },
+        "required": [
+          "number",
+          "status",
+          "items",
+          "subtotalCents",
+          "shippingCents",
+          "discountCents",
+          "totalCents",
+          "createdAt",
+          "recipient",
+          "events"
         ]
       }
     }

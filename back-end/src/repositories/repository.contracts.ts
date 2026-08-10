@@ -35,6 +35,7 @@ export abstract class StockRepository {
 
 export abstract class OrderRepository {
   abstract save(draft: OrderDraft): OrderAggregate;
+  abstract listNewestFirst(): readonly OrderAggregate[];
   abstract findByIdempotencyKey(key: string): OrderAggregate | undefined;
   abstract findByNumber(number: string): OrderAggregate | undefined;
   abstract appendEvent(orderId: string, event: OrderEvent): void;

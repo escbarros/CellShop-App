@@ -49,6 +49,10 @@ export class InMemoryOrderRepository extends OrderRepository {
     return copyOf(aggregate);
   }
 
+  listNewestFirst(): readonly OrderAggregate[] {
+    return [...this.ordersByNumber.values()].reverse().map(copyOf);
+  }
+
   findByIdempotencyKey(key: string): OrderAggregate | undefined {
     const aggregate = this.ordersByIdempotencyKey.get(key);
 

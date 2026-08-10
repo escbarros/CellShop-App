@@ -80,6 +80,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/orders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List placed orders
+         * @description Returns every order placed so far, newest first, summarised. The route has no authentication, so the summary carries no recipient data; use GET /orders/:number for the full record.
+         */
+        get: operations["OrdersController_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/orders/{number}": {
         parameters: {
             query?: never;
@@ -89,7 +109,7 @@ export interface paths {
         };
         /**
          * Read a placed order
-         * @description Returns the order as it was recorded, with sku, name and price frozen at purchase time.
+         * @description Returns the order as it was recorded, with sku, name and price frozen at purchase time, the recipient with a masked tax id, and the full transition trail.
          */
         get: operations["OrdersController_find"];
         put?: never;
@@ -370,6 +390,91 @@ export interface components {
             /** @description Who receives the order and where it is delivered. */
             recipient: components["schemas"]["RecipientDto"];
         };
+        OrderSummaryResponse: {
+            /**
+             * @description Human readable order number, the reference the customer quotes to support.
+             * @example CCS-2026-000417
+             */
+            number: string;
+            /**
+             * @description Where the order stands.
+             * @example CONFIRMED
+             * @enum {string}
+             */
+            status: "PENDING" | "CONFIRMED" | "CANCELLED" | "FAILED";
+            /**
+             * @description How many units the order carries, summed across every line.
+             * @example 3
+             */
+            itemCount: number;
+            /**
+             * @description What the customer pays, as an integer amount of cents.
+             * @example 17970
+             */
+            totalCents: number;
+            /**
+             * @description Moment the order was placed, in ISO 8601.
+             * @example 2026-08-09T12:00:03.104Z
+             */
+            createdAt: string;
+        };
+        RecipientResponse: {
+            /**
+             * @description Full name of whoever receives the order.
+             * @example Ana Beatriz Nogueira
+             */
+            name: string;
+            /**
+             * @description CPF with the first three and last two digits hidden. The route has no authentication, so it never hands back a whole document.
+             * @example ***.533.447-**
+             */
+            taxId: string;
+            /**
+             * @description Contact email recorded with the order.
+             * @example ana.nogueira@example.com
+             */
+            email: string;
+            /**
+             * @description Contact phone recorded with the order, or null when none was given.
+             * @example 11987654321
+             */
+            phone: Record<string, never> | null;
+            /**
+             * @description Zip code, eight digits with no punctuation.
+             * @example 01310930
+             */
+            zipCode: string;
+            /**
+             * @description Street name of the delivery address.
+             * @example Avenida Paulista
+             */
+            street: string;
+            /**
+             * @description Street number of the delivery address.
+             * @example 1578
+             */
+            number: string;
+            /**
+             * @description Extra address information, or null when none was given.
+             * @example Apto 92, torre B
+             */
+            complement: Record<string, never> | null;
+            /**
+             * @description District of the delivery address.
+             * @example Bela Vista
+             */
+            district: string;
+            /**
+             * @description City of the delivery address.
+             * @example São Paulo
+             */
+            city: string;
+            /**
+             * @description Two letter state code.
+             * @example SP
+             */
+            state: string;
+        };
         OrderEventResponse: {
             /**
              * @description Status the order held before this event. Null on the event that created it.
@@ -398,6 +503,50 @@ export interface components {
              * @example 2026-08-09T12:00:03.117Z
              */
             createdAt: string;
+        };
+        OrderDetailResponse: {
+            /**
+             * @description Human readable order number, the reference the customer quotes to support.
+             * @example CCS-2026-000417
+             */
+            number: string;
+            /**
+             * @description Where the order stands. Only PENDING can still move to another status.
+             * @example CONFIRMED
+             * @enum {string}
+             */
+            status: "PENDING" | "CONFIRMED" | "CANCELLED" | "FAILED";
+            /** @description Lines of the order, with sku, name and price frozen at purchase time. */
+            items: components["schemas"]["OrderItemResponse"][];
+            /**
+             * @description Sum of every line total, as an integer amount of cents.
+             * @example 15980
+             */
+            subtotalCents: number;
+            /**
+             * @description Shipping in cents. Flat 1990, or 0 when subtotalCents is at least 19900.
+             * @example 1990
+             */
+            shippingCents: number;
+            /**
+             * @description Discount in cents. Always 0 in this delivery, there is no coupon yet.
+             * @example 0
+             */
+            discountCents: number;
+            /**
+             * @description What the customer pays: subtotalCents plus shippingCents minus discountCents.
+             * @example 17970
+             */
+            totalCents: number;
+            /**
+             * @description Moment the order was placed, in ISO 8601.
+             * @example 2026-08-09T12:00:03.104Z
+             */
+            createdAt: string;
+            /** @description Who receives the order, with the tax id masked. */
+            recipient: components["schemas"]["RecipientResponse"];
+            /** @description Every status transition the order went through, oldest first. */
+            events: components["schemas"]["OrderEventResponse"][];
         };
     };
     responses: never;
@@ -593,26 +742,57 @@ export interface operations {
             };
         };
     };
-    OrdersController_find: {
+    OrdersController_list: {
         parameters: {
             query?: never;
             header?: never;
-            path: {
-                /** @description Order number handed back by POST /checkout. */
-                number: unknown;
-            };
+            path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description The requested order. */
+            /** @description The orders placed so far, newest first. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["SuccessResponse"] & {
-                        data?: components["schemas"]["OrderResponse"];
+                        data?: components["schemas"]["OrderSummaryResponse"][];
+                    };
+                };
+            };
+            /** @description Unexpected failure. The cause is logged under meta.requestId. */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    OrdersController_find: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Order number handed back by POST /checkout. */
+                number: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The requested order, with its recipient and its event trail. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuccessResponse"] & {
+                        data?: components["schemas"]["OrderDetailResponse"];
                     };
                 };
             };
