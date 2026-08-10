@@ -69,33 +69,38 @@ O que se perdeu: boilerplate. Módulo, provider e decorator para coisas que no E
 
 ### Dados em memória, não banco
 
-O enunciado libera dados em memória e cobra "simples de executar". Sem banco, o projeto sobe com um comando e não pede nada instalado.
+O desafio permite usar dados em memória e prioriza uma aplicação simples de executar. Sem banco, não é preciso configurar conexão, migrations ou outros serviços.
 
-O que se perdeu: responsabilidades que o banco resolveria sozinho passaram para o código. Não deixar o estoque negativo, garantir que um pedido não seja criado duas vezes, manter o pedido e seus itens consistentes, tudo isso virou código, e por isso virou teste. E o estoque volta ao seed a cada reinício, o que num ambiente de demonstração é até conveniente, mas não é o comportamento de um sistema real.
+A desvantagem é que algumas responsabilidades que normalmente ficariam no banco passam para o código, como controle de estoque, idempotência e consistência dos pedidos. Por isso, essas regras também são cobertas pelos testes.
 
-Os repositórios foram desenhados em cima da modelagem, um para um:
+Os repositórios seguem a mesma divisão da modelagem:
 
-| Repositório | Tabelas de [`database-model.md`](./docs/database-model.md) |
-|---|---|
-| `InMemoryCatalogRepository` | `products`, `product_variants` |
-| `InMemoryStockRepository` | `stock` |
-| `InMemoryOrderRepository` | `orders`, `order_items`, `order_recipients`, `order_events` |
+| Repositório                 | Tabelas                                                     |
+| --------------------------- | ----------------------------------------------------------- |
+| `InMemoryCatalogRepository` | `products`, `product_variants`                              |
+| `InMemoryStockRepository`   | `stock`                                                     |
+| `InMemoryOrderRepository`   | `orders`, `order_items`, `order_recipients`, `order_events` |
 
-Cada método tem uma operação equivalente em SQL. Trocar a implementação é criar as três classes novas e mudar o `useClass` de cada módulo; os serviços e os testes ficam como estão.
+Cada método possui uma operação equivalente no banco. Assim, trocar a implementação em memória por uma de MySQL ou Postgres exige apenas criar os novos repositórios e alterar a configuração do módulo. Os serviços e testes continuam os mesmos.
 
-### A atomicidade da baixa de estoque
+### Baixa de estoque
 
-Numa compra concorrente, checar o saldo e depois descontar é uma corrida: duas requisições leem "tem 1" e as duas descontam. `decrementIfAvailable` resolve isso fazendo as duas coisas numa operação síncrona só, sem `await` no meio — como o Node roda um callback por vez, nada se intercala entre a checagem e o desconto. A chave de idempotência é gravada na mesma operação que cria o pedido, pela mesma razão.
+Verificar o estoque e depois fazer a baixa em operações separadas pode causar problemas quando duas compras acontecem ao mesmo tempo.
 
-O que se perdeu: isso é garantia de processo único. Com duas instâncias da API, cada uma com sua memória, a corrida volta. Num banco a mesma ideia vira `UPDATE stock SET available_qty = available_qty - ? WHERE variant_id = ? AND available_qty >= ?`, que é atômico de verdade e vale para o cluster inteiro. A forma da solução é a mesma; o que muda é quem garante.
+Por isso, `decrementIfAvailable` verifica e desconta o estoque em uma única operação síncrona. Em uma única instância da API, isso evita que outra requisição entre no meio desse processo.
 
-O teste `does not yield the event loop between check and decrement` existe justamente para quebrar se alguém colocar um `await` no meio.
+Essa garantia não funciona entre várias instâncias, já que cada uma teria sua própria memória. Com um banco, a mesma regra seria feita por um `UPDATE` condicional, e o próprio banco garantiria a operação de forma segura para todas as instâncias.
 
-### O núcleo da modelagem, não a modelagem inteira
+O teste `does not yield the event loop between check and decrement` garante que não seja introduzido um `await` entre a verificação e a baixa.
 
-O diagrama tem mais tabelas do que o código usa. As sete que sustentam o checkout foram implementadas; `reservas_estoque` e o catálogo de atributos ficaram de fora.
+### O núcleo da modelagem
 
-O que se perdeu: reserva de estoque. Ela faz sentido quando o carrinho e o pagamento são passos separados no tempo e é preciso segurar a unidade nesse intervalo. Aqui o checkout é um passo só — a baixa acontece na mesma requisição que cria o pedido — então a reserva não teria nada para segurar. Se o pagamento entrasse no escopo, ela voltaria.
+A modelagem possui algumas tabelas que não são necessárias para o fluxo atual. As tabelas usadas pelo checkout foram implementadas, enquanto `reservas_estoque` e o catálogo de atributos ficaram de fora.
+
+A reserva de estoque seria necessária se carrinho e pagamento fossem etapas separadas e fosse preciso manter uma unidade reservada durante esse período.
+
+Como o checkout atual acontece em uma única requisição, a reserva não é necessária. Se o pagamento entrar no fluxo futuramente, ela passa a fazer sentido.
+
 
 ### Dinheiro em centavos
 
