@@ -8,7 +8,7 @@ export const IMAGES_PATH = '/images';
 
 const IMAGES_DIRECTORY = join(__dirname, '..', '..', '..', 'public', 'images');
 
-export const ALLOWED_HEADERS = ['Content-Type', 'Accept', 'Idempotency-Key', 'X-Chaos'];
+export const ALLOWED_HEADERS = ['Content-Type', 'Accept', 'Idempotency-Key'];
 
 const ALLOWED_METHODS = ['GET', 'POST', 'OPTIONS'];
 

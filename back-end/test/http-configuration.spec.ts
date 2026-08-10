@@ -29,16 +29,6 @@ describe('http configuration', () => {
     expect(response.headers['access-control-allow-headers']).toContain('Idempotency-Key');
   });
 
-  it('announces the chaos header as allowed so the browser does not block it', async () => {
-    const response = await request(server)
-      .options('/checkout')
-      .set('Origin', ALLOWED_ORIGIN)
-      .set('Access-Control-Request-Method', 'POST')
-      .set('Access-Control-Request-Headers', 'X-Chaos');
-
-    expect(response.headers['access-control-allow-headers']).toContain('X-Chaos');
-  });
-
   it('refuses a body over the limit instead of taking the process down', async () => {
     const oversizedBody = { padding: 'a'.repeat(200 * 1024) };
 

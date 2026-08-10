@@ -6,7 +6,6 @@ const MAX_PORT = 65535;
 const environmentSchema = z.object({
   PORT: z.coerce.number().int().min(MIN_PORT).max(MAX_PORT),
   CORS_ORIGIN: z.string().trim().min(1),
-  CHAOS_ENABLED: z.enum(['true', 'false']).transform((value) => value === 'true'),
   IMAGES_BASE_URL: z.string().trim().min(1),
 });
 
