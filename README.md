@@ -2,8 +2,9 @@
 
 Loja de capinhas com o fluxo de compra fechado de ponta a ponta: uma API que recebe a tentativa de compra, valida, dá baixa no estoque e responde, e uma tela que mostra o andamento, evita o clique duplo e explica sucesso e erro em português.
 
-Desafio técnico CaseCellShop — júnior fullstack. Back-end em NestJS + TypeScript, front-end em React + TypeScript, dados em memória.
+Back-end em NestJS + TypeScript, front-end em React + TypeScript, dados em memória.
 
+Eduardo Barros - escbarross@gmail.com - (41) 99581-1049
 ---
 
 ## Como rodar
@@ -146,15 +147,16 @@ O que se perdeu: um pedido não tem dono, então não existe "meus pedidos" de v
 
 ## O que eu faria a seguir
 
-Com mais tempo, na ordem em que atacaria:
+Com mais tempo, eu priorizaria:
 
-**Banco de verdade.** Trocar os três repositórios em memória por implementações MySQL, com a baixa de estoque virando `UPDATE` condicional e a chave de idempotência ganhando índice único. É a mudança que transforma as garantias de processo único em garantias reais.
+**Banco de verdade.** Trocar os repositórios em memória por MySQL, levando o controle de estoque e a idempotência para o banco.
 
-**Cache e CDN na leitura.** A vitrine é o endpoint mais chamado e o que menos muda. Cache de resposta na API e as imagens atrás de uma CDN tiram a maior parte da carga antes que ela chegue no banco.
+**Cache e CDN.** A vitrine é a parte mais acessada e pode se beneficiar de cache e de uma CDN para as imagens.
 
-**Fila e worker para o que vem depois do pedido.** Confirmação por e-mail, integração com logística, emissão de nota — nada disso precisa acontecer dentro da requisição de checkout. Gravar o evento numa tabela de saída e deixar um worker consumir mantém o checkout rápido e torna essas etapas reprocessáveis quando falham.
+**Fila para processos posteriores.** E-mail, logística e emissão de nota poderiam ser processados em segundo plano, sem deixar o checkout esperando.
 
-**Reserva de estoque.** Necessária no dia em que o pagamento entrar e o checkout deixar de ser um passo só. A tabela já está prevista na modelagem.
+**Reserva de estoque.** Seria importante quando o pagamento fizer parte do fluxo, evitando que o estoque seja baixado antes de a compra ser realmente concluída.
+
 
 ## Documentos
 
