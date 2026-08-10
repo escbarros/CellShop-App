@@ -1,6 +1,7 @@
 import { Smartphone } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { CartButton } from './CartButton';
+import { ProfileButton } from './ProfileButton';
 
 export function Navbar() {
   return (
@@ -16,7 +17,10 @@ export function Navbar() {
           <span className="text-lg font-semibold tracking-tight text-ink">CellShop</span>
         </Link>
 
-        <CartButton />
+        <div className="flex items-center gap-2">
+          <ProfileButton />
+          <CartButton />
+        </div>
       </div>
     </header>
   );

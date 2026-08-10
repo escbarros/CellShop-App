@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { submitCheckout } from '../api/client';
 import type { CheckoutPayload, Order } from '../api/contract';
-import { catalogKeys } from '../api/queries';
+import { catalogKeys, orderKeys } from '../api/queries';
 import type { ApiResult } from '../api/result';
 
 export type CheckoutAttempt = {
@@ -17,6 +17,7 @@ export function useCheckout() {
     onSuccess: (result) => {
       if (result.kind === 'success') {
         void queryClient.invalidateQueries({ queryKey: catalogKeys.all });
+        void queryClient.invalidateQueries({ queryKey: orderKeys.all });
       }
     },
   });

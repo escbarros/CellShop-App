@@ -29,6 +29,12 @@ describe('Navbar', () => {
     ).toBeInTheDocument();
   });
 
+  it('leads to the orders page from the profile button', () => {
+    renderWithProviders(<Navbar />);
+
+    expect(screen.getByRole('link', { name: 'Meus pedidos' })).toHaveAttribute('href', '/orders');
+  });
+
   it('opens the cart drawer when the cart button is clicked', async () => {
     renderWithProviders(<Navbar />);
 
