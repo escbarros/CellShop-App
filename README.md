@@ -26,7 +26,7 @@ npm run dev
 
 Sobe a API em `:3333` e a tela em `:5173`, com os logs dos dois no mesmo terminal. `npm test` roda a suíte dos dois pacotes e `npm run lint` passa o eslint nos dois.
 
-Os detalhes de cada lado — variáveis de ambiente, comandos, exemplos de `curl`, roteiro de demonstração — estão nos READMEs de [`back-end/`](./back-end/README.md) e [`front-end/`](./front-end/README.md).
+Os detalhes de cada lado (variáveis de ambiente, comandos, exemplos de `curl`, roteiro de demonstração) estão nos READMEs de [`back-end/`](./back-end/README.md) e [`front-end/`](./front-end/README.md).
 
 ## O fluxo do checkout
 
@@ -111,14 +111,14 @@ O que se perdeu: a formatação vira responsabilidade explícita. A API devolve 
 
 ### Contrato antes do código
 
-Os DTOs e os controllers decorados vieram primeiro, com o corpo lançando `NotImplementedException`. O contrato ficou navegável no Swagger antes de existir comportamento, e o [`docs/openapi.json`](./docs/openapi.json) é gerado do código — os tipos do front saem desse mesmo arquivo.
+Os DTOs e os controllers decorados vieram primeiro, com o corpo lançando `NotImplementedException`. O contrato ficou navegável no Swagger antes de existir comportamento, e o [`docs/openapi.json`](./docs/openapi.json) é gerado do código, os tipos do front saem desse mesmo arquivo.
 
 O que se perdeu: uma etapa a mais no fluxo. Quando o contrato muda, é preciso regenerar o arquivo e os tipos. Em compensação não existe um YAML paralelo envelhecendo em silêncio, e o hook de `pre-push` recusa um push com o `openapi.json` desatualizado.
 
 
 ### Validação nos dois lados
 
-A API valida tudo que recebe, e a tela valida o que consegue antes de enviar: uma linha que pede mais unidades do que o estoque tem, ou um SKU que saiu do catálogo, bloqueiam o botão de finalizar. É duplicação de propósito — a do cliente dá resposta imediata sem ida ao servidor, a do servidor é a que vale, porque a API é pública e não pode confiar em quem chama.
+A API valida tudo que recebe, e a tela valida o que consegue antes de enviar: uma linha que pede mais unidades do que o estoque tem, ou um SKU que saiu do catálogo, bloqueiam o botão de finalizar.
 
 O que se perdeu: duas listas de regras para manter em sincronia. As mensagens da API vêm num `details` por campo, o que deixa a tela mostrar o erro do servidor no lugar certo em vez de um aviso genérico.
 
@@ -128,13 +128,13 @@ O formulário de entrega ainda não existe. O checkout envia um destinatário fi
 
 Nenhum controller devolve bytes de imagem. Os arquivos ficam em `back-end/public/images/`, são servidos como estáticos e a API devolve só a URL, montada a partir de `IMAGES_BASE_URL`.
 
-O que se perdeu: nada relevante neste escopo, e o caminho para produção fica aberto — apontar a variável para um bucket com CDN na frente não muda uma linha do contrato nem do front.
+O que se perdeu: nada relevante neste escopo, e o caminho para produção fica aberto. Apontar a variável para um bucket com CDN na frente não muda uma linha do contrato nem do front.
 
 ### Duas topologias de execução
 
 Local, o front em `:5173` chama a API em `:3333` e o CORS precisa autorizar essa origem. No Docker, o nginx serve o build e faz proxy de `/api`, então navegador e API compartilham a origem e não há CORS.
 
-Por que não uma só: o Vite embute `VITE_API_URL` no momento do build. Uma imagem com `http://localhost:3333` embutido só funcionaria na máquina de quem a construiu. O que se perdeu é que existem dois caminhos para documentar e manter — e é por isso que essa diferença aparece explicada nos dois READMEs.
+Por que não uma só: o Vite embute `VITE_API_URL` no momento do build. Uma imagem com `http://localhost:3333` embutido só funcionaria na máquina de quem a construiu. O que se perdeu é que existem dois caminhos para documentar e manter. 
 
 ### Sem autenticação, sem pagamento, sem usuário
 
