@@ -444,7 +444,12 @@ describe('CheckoutSummary', () => {
       error: {
         code: 'VALIDATION_FAILED',
         message: 'Confira os dados informados e tente de novo.',
-        details: [{ field: 'items', message: 'Leve no máximo 5 capinhas diferentes por pedido.' }],
+        details: [
+          {
+            field: 'items',
+            message: 'Cada capinha pode aparecer uma vez só. Some as unidades no mesmo item.',
+          },
+        ],
       },
     });
     useCartStore.getState().add(BLOOM);
@@ -453,7 +458,7 @@ describe('CheckoutSummary', () => {
     await finishPurchase();
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Leve no máximo 5 capinhas diferentes por pedido.',
+      'Cada capinha pode aparecer uma vez só. Some as unidades no mesmo item.',
     );
   });
 

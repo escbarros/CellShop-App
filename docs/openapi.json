@@ -824,7 +824,6 @@
           "items": {
             "description": "Lines of the order. Each sku may appear only once, with its own quantity.",
             "minItems": 1,
-            "maxItems": 5,
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/CheckoutItemDto"
