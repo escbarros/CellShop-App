@@ -1,0 +1,18 @@
+services:
+  back-end:
+    build: ./back-end
+    environment:
+      PORT: 3333
+      CORS_ORIGIN: http://localhost:8080
+      IMAGES_BASE_URL: /api/images
+    # Descomente para abrir o Swagger em http://localhost:3333/docs
+    # ports:
+    #   - '3333:3333'
+
+  front-end:
+    build: ./front-end
+    ports:
+      - '8080:80'
+    depends_on:
+      back-end:
+        condition: service_healthy
