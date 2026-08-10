@@ -1,6 +1,8 @@
 export type ApiErrorDetail = {
   field: string;
   message: string;
+  sku?: string;
+  available?: number;
 };
 
 export type ApiError = {

@@ -115,6 +115,16 @@ export interface components {
              * @example Informe ao menos uma unidade.
              */
             message: string;
+            /**
+             * @description Sku the failure refers to, present when stock is the reason.
+             * @example CAP-BLOOM-IP16-AIS-TRA
+             */
+            sku?: string;
+            /**
+             * @description Units still available for that sku at the moment the order was refused.
+             * @example 3
+             */
+            available?: number;
         };
         ErrorBody: {
             /**

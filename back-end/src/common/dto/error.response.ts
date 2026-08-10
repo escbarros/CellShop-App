@@ -14,6 +14,18 @@ export class ErrorDetail {
     example: 'Informe ao menos uma unidade.',
   })
   message!: string;
+
+  @ApiPropertyOptional({
+    description: 'Sku the failure refers to, present when stock is the reason.',
+    example: 'CAP-BLOOM-IP16-AIS-TRA',
+  })
+  sku?: string;
+
+  @ApiPropertyOptional({
+    description: 'Units still available for that sku at the moment the order was refused.',
+    example: 3,
+  })
+  available?: number;
 }
 
 export class ErrorBody {

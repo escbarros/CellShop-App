@@ -33,8 +33,8 @@ export class OrderNotFoundError extends AppException {
 }
 
 export class InsufficientStockError extends AppException {
-  constructor() {
-    super(ERROR_CODES.INSUFFICIENT_STOCK);
+  constructor(details?: ApiErrorDetail[]) {
+    super(ERROR_CODES.INSUFFICIENT_STOCK, details);
   }
 }
 

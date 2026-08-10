@@ -1,12 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { variantDisplayName } from '../catalog/catalog.model';
-import { SkuNotFoundError } from '../common/errors/domain.errors';
+import { InsufficientStockError, SkuNotFoundError } from '../common/errors/domain.errors';
 import { Cents, multiply, sum } from '../common/money';
 import {
   CatalogRepository,
   OrderAggregate,
   OrderDraft,
   OrderRepository,
+  StockRepository,
 } from '../repositories/repository.contracts';
 import { CheckoutItemDto } from './dto/checkout-item.dto';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
@@ -21,6 +22,18 @@ import { ORDER_STATUSES, OrderItem, OrderRecipient } from './order.model';
 const NO_DISCOUNT_CENTS = 0;
 
 const NO_SHIPPING_CENTS = 0;
+
+const NOTHING_AVAILABLE = 0;
+
+const SINGLE_UNIT = 1;
+
+function shortageMessage(name: string, available: number): string {
+  if (available === NOTHING_AVAILABLE) {
+    return `${name} está esgotado.`;
+  }
+
+  return `Restam apenas ${available} ${available === SINGLE_UNIT ? 'unidade' : 'unidades'} de ${name}.`;
+}
 
 function shippingFor(subtotalCents: Cents): Cents {
   return subtotalCents >= FREE_SHIPPING_THRESHOLD_CENTS ? NO_SHIPPING_CENTS : FLAT_SHIPPING_CENTS;
@@ -66,10 +79,14 @@ export class CheckoutService {
   constructor(
     private readonly catalog: CatalogRepository,
     private readonly orders: OrderRepository,
+    private readonly stock: StockRepository,
   ) {}
 
   create(payload: CreateCheckoutDto, idempotencyKey: string): OrderResponse {
     const items = payload.items.map((line, index) => this.freeze(line, index));
+
+    this.take(items);
+
     const subtotalCents = sum(...items.map((item) => item.subtotalCents));
     const shippingCents = shippingFor(subtotalCents);
     const createdAt = new Date();
@@ -77,7 +94,7 @@ export class CheckoutService {
     const draft: OrderDraft = {
       order: {
         idempotencyKey,
-        status: ORDER_STATUSES.PENDING,
+        status: ORDER_STATUSES.CONFIRMED,
         subtotalCents,
         shippingCents,
         discountCents: NO_DISCOUNT_CENTS,
@@ -90,6 +107,33 @@ export class CheckoutService {
     };
 
     return toResponse(this.orders.save(draft));
+  }
+
+  private take(items: readonly OrderItem[]): void {
+    const taken: OrderItem[] = [];
+
+    for (const [index, item] of items.entries()) {
+      if (this.stock.decrementIfAvailable(item.variantId, item.quantity)) {
+        taken.push(item);
+
+        continue;
+      }
+
+      for (const previous of taken) {
+        this.stock.restore(previous.variantId, previous.quantity);
+      }
+
+      const available = this.stock.find(item.variantId)?.availableQty ?? NOTHING_AVAILABLE;
+
+      throw new InsufficientStockError([
+        {
+          field: `items.${index}.quantity`,
+          message: shortageMessage(item.nameSnapshot, available),
+          sku: item.skuSnapshot,
+          available,
+        },
+      ]);
+    }
   }
 
   private freeze(line: CheckoutItemDto, index: number): OrderItem {

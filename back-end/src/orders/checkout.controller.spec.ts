@@ -61,7 +61,7 @@ describe('checkout endpoint', () => {
     expect(order.shippingCents).toBe(1990);
     expect(order.discountCents).toBe(0);
     expect(order.totalCents).toBe(17970);
-    expect(order.status).toBe('PENDING');
+    expect(order.status).toBe('CONFIRMED');
     expect(new Date(order.createdAt).toISOString()).toBe(order.createdAt);
   });
 
