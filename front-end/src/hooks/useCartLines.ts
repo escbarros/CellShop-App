@@ -1,4 +1,6 @@
 import type { Variant } from '../api/contract';
+import { formatCents } from '../api/money';
+import { formatShipping, shippingFor } from '../api/shipping';
 import { useCartItems } from '../store/cart-store';
 import { useProducts } from './useProducts';
 
@@ -14,10 +16,13 @@ export type CartSummary = {
   lines: CartLine[];
   subtotalCents: number;
   formattedSubtotal: string;
+  shippingCents: number;
+  formattedShipping: string;
+  isShippingFree: boolean;
+  totalCents: number;
+  formattedTotal: string;
   isCatalogPending: boolean;
 };
-
-const brlFormatter = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
 
 export function useCartLines(): CartSummary {
   const items = useCartItems();
@@ -32,16 +37,23 @@ export function useCartLines(): CartSummary {
       quantity: item.quantity,
       variant,
       lineTotalCents,
-      formattedLineTotal: variant ? brlFormatter.format(lineTotalCents / 100) : null,
+      formattedLineTotal: variant ? formatCents(lineTotalCents) : null,
     };
   });
 
   const subtotalCents = lines.reduce((total, line) => total + line.lineTotalCents, 0);
+  const shippingCents = shippingFor(subtotalCents);
+  const isShippingFree = shippingCents === 0;
 
   return {
     lines,
     subtotalCents,
-    formattedSubtotal: brlFormatter.format(subtotalCents / 100),
+    formattedSubtotal: formatCents(subtotalCents),
+    shippingCents,
+    formattedShipping: formatShipping(shippingCents),
+    isShippingFree,
+    totalCents: subtotalCents + shippingCents,
+    formattedTotal: formatCents(subtotalCents + shippingCents),
     isCatalogPending: isPending,
   };
 }

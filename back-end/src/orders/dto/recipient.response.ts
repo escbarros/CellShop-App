@@ -22,6 +22,7 @@ export class RecipientResponse {
 
   @ApiProperty({
     description: 'Contact phone recorded with the order, or null when none was given.',
+    type: String,
     nullable: true,
     example: '11987654321',
   })
@@ -38,6 +39,7 @@ export class RecipientResponse {
 
   @ApiProperty({
     description: 'Extra address information, or null when none was given.',
+    type: String,
     nullable: true,
     example: 'Apto 92, torre B',
   })

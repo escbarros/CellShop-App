@@ -4,7 +4,12 @@ import { readDetails, readEnvelope, readMessage, readShortage } from './envelope
 export type ApiResult<T> =
   | { kind: 'success'; data: T; meta: ResponseMeta }
   | { kind: 'validation'; message: string; details: ValidationDetail[] }
-  | { kind: 'conflict'; message: string; shortage: StockShortage | null }
+  | {
+      kind: 'conflict';
+      message: string;
+      shortage: StockShortage | null;
+      details: ValidationDetail[];
+    }
   | { kind: 'notFound'; message: string }
   | { kind: 'unavailable'; message: string }
   | { kind: 'network'; message: string }
@@ -23,7 +28,7 @@ export class ApiFailure extends Error {
 }
 
 const NETWORK_MESSAGE = 'Não conseguimos falar com o servidor.';
-const UNKNOWN_MESSAGE = 'Algo deu errado do nosso lado. Tente de novo em instantes.';
+export const UNKNOWN_MESSAGE = 'Algo deu errado do nosso lado. Tente de novo em instantes.';
 
 export function networkFailure<T>(): ApiResult<T> {
   return { kind: 'network', message: NETWORK_MESSAGE };
@@ -46,7 +51,12 @@ export async function interpret<T>(response: Response): Promise<ApiResult<T>> {
     case 404:
       return { kind: 'notFound', message };
     case 409:
-      return { kind: 'conflict', message, shortage: readShortage(body) };
+      return {
+        kind: 'conflict',
+        message,
+        shortage: readShortage(body),
+        details: readDetails(body),
+      };
     case 422:
       return { kind: 'validation', message, details: readDetails(body) };
     case 503:

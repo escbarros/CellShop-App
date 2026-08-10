@@ -1,3 +1,8 @@
+export const orderKeys = {
+  all: ['orders'] as const,
+  detail: (number: string) => [...orderKeys.all, 'detail', number] as const,
+};
+
 export const catalogKeys = {
   all: ['catalog'] as const,
   list: () => [...catalogKeys.all, 'list'] as const,

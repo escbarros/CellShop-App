@@ -212,19 +212,21 @@ describe('submitCheckout', () => {
   });
 
   it('maps 409 to a conflict result with sku and available quantity', async () => {
+    const details = [
+      {
+        field: 'items.0.quantity',
+        message: 'Restam 3 unidades.',
+        sku: 'CAP-BLOOM-IP16-AIS-TRA',
+        available: 3,
+      },
+    ];
+
     stubJson(409, {
       data: null,
       error: {
         code: 'INSUFFICIENT_STOCK',
         message: 'Não temos essa quantidade em estoque.',
-        details: [
-          {
-            field: 'items.0.quantity',
-            message: 'Restam 3 unidades.',
-            sku: 'CAP-BLOOM-IP16-AIS-TRA',
-            available: 3,
-          },
-        ],
+        details,
       },
       meta: META,
     });
@@ -235,7 +237,25 @@ describe('submitCheckout', () => {
       kind: 'conflict',
       message: 'Não temos essa quantidade em estoque.',
       shortage: { sku: 'CAP-BLOOM-IP16-AIS-TRA', available: 3 },
+      details,
     });
+  });
+
+  it('keeps the shortage sentence the api wrote for the buyer', async () => {
+    stubJson(
+      409,
+      envelope(null, {
+        code: 'INSUFFICIENT_STOCK',
+        message: 'Não temos essa quantidade em estoque.',
+        details: [{ field: 'items.0.quantity', message: 'Restam apenas 2 unidades de Bloom.' }],
+      }),
+    );
+
+    const result = await submitCheckout(checkoutPayload, IDEMPOTENCY_KEY);
+
+    expect(result.kind === 'conflict' && result.details[0].message).toBe(
+      'Restam apenas 2 unidades de Bloom.',
+    );
   });
 
   it('maps 409 without a usable detail to a conflict result with no shortage', async () => {
@@ -253,6 +273,7 @@ describe('submitCheckout', () => {
       kind: 'conflict',
       message: 'Não temos essa quantidade em estoque.',
       shortage: null,
+      details: [],
     });
   });
 

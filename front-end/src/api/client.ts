@@ -1,4 +1,4 @@
-import type { CheckoutPayload, Order, Variant } from './contract';
+import type { CheckoutPayload, Order, OrderDetail, Variant } from './contract';
 import type { ApiResult } from './result';
 import { interpret, networkFailure } from './result';
 
@@ -10,6 +10,10 @@ export function listProducts(): Promise<ApiResult<Variant[]>> {
 
 export function getProduct(sku: string): Promise<ApiResult<Variant>> {
   return request<Variant>(`/products/${encodeURIComponent(sku)}`);
+}
+
+export function getOrder(number: string): Promise<ApiResult<OrderDetail>> {
+  return request<OrderDetail>(`/orders/${encodeURIComponent(number)}`);
 }
 
 export function submitCheckout(

@@ -438,7 +438,7 @@ export interface components {
              * @description Contact phone recorded with the order, or null when none was given.
              * @example 11987654321
              */
-            phone: Record<string, never> | null;
+            phone: string | null;
             /**
              * @description Zip code, eight digits with no punctuation.
              * @example 01310930
@@ -458,7 +458,7 @@ export interface components {
              * @description Extra address information, or null when none was given.
              * @example Apto 92, torre B
              */
-            complement: Record<string, never> | null;
+            complement: string | null;
             /**
              * @description District of the delivery address.
              * @example Bela Vista

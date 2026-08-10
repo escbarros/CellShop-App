@@ -906,7 +906,7 @@
             "example": "ana.nogueira@example.com"
           },
           "phone": {
-            "type": "object",
+            "type": "string",
             "description": "Contact phone recorded with the order, or null when none was given.",
             "nullable": true,
             "example": "11987654321"
@@ -927,7 +927,7 @@
             "example": "1578"
           },
           "complement": {
-            "type": "object",
+            "type": "string",
             "description": "Extra address information, or null when none was given.",
             "nullable": true,
             "example": "Apto 92, torre B"

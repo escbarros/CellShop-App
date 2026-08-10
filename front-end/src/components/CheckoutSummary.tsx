@@ -1,19 +1,76 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import type { Order } from '../api/contract';
+import { CHECKOUT_RECIPIENT } from '../api/recipient';
+import type { ApiResult } from '../api/result';
+import { UNKNOWN_MESSAGE } from '../api/result';
 import { useCartLines } from '../hooks/useCartLines';
+import { useCheckout } from '../hooks/useCheckout';
+import { useIdempotencyKey } from '../hooks/useIdempotencyKey';
 import { useProducts } from '../hooks/useProducts';
 import { useCartDrawerStore } from '../store/cart-drawer-store';
-import { useCartItems, useCartUnitCount } from '../store/cart-store';
+import { useCartItems, useCartStore, useCartUnitCount } from '../store/cart-store';
 import { CheckoutEmpty } from './CheckoutEmpty';
 import { CheckoutLine } from './CheckoutLine';
+import { CheckoutPanel } from './CheckoutPanel';
+import type { CheckoutFailure } from './CheckoutPanel';
 import { CheckoutSkeleton } from './CheckoutSkeleton';
-import { CheckoutTotals } from './CheckoutTotals';
 import { LoadError } from './LoadError';
+
+type RejectedCheckout = Exclude<ApiResult<Order>, { kind: 'success' }>;
+
+function failureOf(result: RejectedCheckout): CheckoutFailure {
+  const reasons =
+    result.kind === 'validation' || result.kind === 'conflict'
+      ? result.details.map((detail) => detail.message)
+      : [];
+
+  return { message: result.message, reasons };
+}
 
 export function CheckoutSummary() {
   const items = useCartItems();
   const unitCount = useCartUnitCount();
-  const { lines, formattedSubtotal } = useCartLines();
+  const { lines, formattedSubtotal, formattedShipping, formattedTotal } = useCartLines();
   const { error, isPending, isError, refetch } = useProducts();
   const openCart = useCartDrawerStore((state) => state.open);
+  const clearCart = useCartStore((state) => state.clear);
+  const { key, renew } = useIdempotencyKey();
+  const checkout = useCheckout();
+  const navigate = useNavigate();
+  const [failure, setFailure] = useState<CheckoutFailure | null>(null);
+
+  function placeOrder() {
+    if (checkout.isPending) {
+      return;
+    }
+
+    setFailure(null);
+
+    checkout.mutate(
+      {
+        payload: {
+          items: items.map((item) => ({ sku: item.sku, quantity: item.quantity })),
+          recipient: CHECKOUT_RECIPIENT,
+        },
+        idempotencyKey: key,
+      },
+      {
+        onSuccess: (result) => {
+          if (result.kind !== 'success') {
+            setFailure(failureOf(result));
+
+            return;
+          }
+
+          void navigate(`/orders/${result.data.number}`);
+          clearCart();
+          renew();
+        },
+        onError: () => setFailure({ message: UNKNOWN_MESSAGE, reasons: [] }),
+      },
+    );
+  }
 
   if (items.length === 0) {
     return <CheckoutEmpty />;
@@ -59,10 +116,15 @@ export function CheckoutSummary() {
         </ul>
       </section>
 
-      <CheckoutTotals
-        formattedSubtotal={formattedSubtotal}
+      <CheckoutPanel
         unitCount={unitCount}
+        formattedSubtotal={formattedSubtotal}
+        formattedShipping={formattedShipping}
+        formattedTotal={formattedTotal}
         canPlaceOrder={canPlaceOrder}
+        isSubmitting={checkout.isPending}
+        failure={failure}
+        onPlaceOrder={placeOrder}
       />
     </div>
   );
